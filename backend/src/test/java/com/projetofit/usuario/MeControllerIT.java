@@ -12,6 +12,7 @@ import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.projetofit.TesteIntegracao;
 import com.projetofit.ficha.FichaRepository;
+import com.projetofit.sessao.SessaoRepository;
 import com.projetofit.aluno.Aluno;
 import com.projetofit.aluno.AlunoRepository;
 import com.projetofit.exercicio.ExercicioRepository;
@@ -41,8 +42,12 @@ class MeControllerIT extends TesteIntegracao {
     @Autowired
     FichaRepository fichaRepository;
 
+    @Autowired
+    SessaoRepository sessaoRepository;
+
     @BeforeEach
     void limpar() {
+        sessaoRepository.deleteAll();
         fichaRepository.deleteAll();
         exercicioRepository.deleteAll();
         alunoRepository.deleteAll();

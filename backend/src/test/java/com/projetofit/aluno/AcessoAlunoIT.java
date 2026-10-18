@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.projetofit.TesteIntegracao;
 import com.projetofit.ficha.FichaRepository;
+import com.projetofit.sessao.SessaoRepository;
 import com.projetofit.seguranca.TokenDeTeste;
 import com.projetofit.exercicio.ExercicioRepository;
 import com.projetofit.usuario.Papel;
@@ -33,8 +34,12 @@ class AcessoAlunoIT extends TesteIntegracao {
     @Autowired
     FichaRepository fichaRepository;
 
+    @Autowired
+    SessaoRepository sessaoRepository;
+
     @BeforeEach
     void preparar() {
+        sessaoRepository.deleteAll();
         fichaRepository.deleteAll();
         exercicioRepository.deleteAll();
         alunoRepository.deleteAll();

@@ -1,5 +1,6 @@
 package com.projetofit.ficha;
 
+import com.projetofit.sessao.SessaoRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -49,6 +50,9 @@ class FichaControllerIT extends TesteIntegracao {
     FichaRepository fichaRepository;
 
     @Autowired
+    SessaoRepository sessaoRepository;
+
+    @Autowired
     JdbcTemplate jdbc;
 
     @Autowired
@@ -63,6 +67,7 @@ class FichaControllerIT extends TesteIntegracao {
 
     @BeforeEach
     void preparar() {
+        sessaoRepository.deleteAll();
         fichaRepository.deleteAll();
         exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
