@@ -145,8 +145,18 @@ describe('SessaoLocalService', () => {
     const restaurado = recriar();
 
     expect(restaurado.emAndamento()).toEqual(antes);
-    expect(antes!.exercicios[0].series[1]).toEqual({ numero: 2, cargaKg: 42.5, repeticoes: 8, concluida: true });
-    expect(antes!.exercicios[1].series[2]).toEqual({ numero: 3, cargaKg: null, repeticoes: 10, concluida: false });
+    expect(antes!.exercicios[0].series[1]).toEqual({
+      numero: 2,
+      cargaKg: 42.5,
+      repeticoes: 8,
+      concluida: true,
+    });
+    expect(antes!.exercicios[1].series[2]).toEqual({
+      numero: 3,
+      cargaKg: null,
+      repeticoes: 10,
+      concluida: false,
+    });
     expect(antes!.observacao).toBe('Pesado hoje');
   });
 
@@ -211,7 +221,9 @@ describe('SessaoLocalService', () => {
     servico.iniciar(ficha, divisao);
     const antes = servico.emAndamento();
 
-    await expect(servico.finalizar()).rejects.toThrow('Conclua pelo menos uma série para finalizar o treino.');
+    await expect(servico.finalizar()).rejects.toThrow(
+      'Conclua pelo menos uma série para finalizar o treino.',
+    );
 
     expect(servico.emAndamento()).toEqual(antes);
     expect(JSON.parse(localStorage.getItem('sessao-em-andamento:u1')!)).toEqual(antes);
@@ -319,7 +331,7 @@ describe('SessaoLocalService', () => {
     const sessao = servico.iniciar(ficha, divisao);
     servico.atualizarSerie(0, 0, { concluida: true });
 
-    await servico.finalizar();
+    expect(await servico.finalizar()).toBe('recusado');
 
     expect(servico.comErro().length).toBe(1);
     expect(servico.comErro()[0].mensagem).toBe(detail);
@@ -341,18 +353,70 @@ describe('SessaoLocalService', () => {
     await servico.finalizar();
 
     registrar.mockReset();
-    registrar.mockRejectedValueOnce(erroHttp(422, 'texto qualquer')).mockResolvedValueOnce(sessaoSalva);
+    registrar
+      .mockRejectedValueOnce(erroHttp(422, 'texto qualquer'))
+      .mockResolvedValueOnce(sessaoSalva);
     await servico.enviarPendentes();
 
     expect(registrar.mock.calls.map((c) => c[0].clientId)).toEqual([primeiro, segundo]);
     expect(servico.comErro()).toEqual([
-      { sessao: expect.objectContaining({ clientId: primeiro }), mensagem: 'O servidor recusou este treino.' },
+      {
+        sessao: expect.objectContaining({ clientId: primeiro }),
+        mensagem: 'O servidor recusou este treino.',
+      },
     ]);
     expect(servico.pendentes()).toBe(0);
   });
 
+  it('finalizar recusado mesmo com outro treino enviado antes devolve recusado', async () => {
+    registrar.mockRejectedValue(erroHttp(0));
+    const servico = criar();
+    servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+    await servico.finalizar();
+    servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+
+    registrar.mockReset();
+    registrar
+      .mockResolvedValueOnce(sessaoSalva)
+      .mockRejectedValueOnce(erroHttp(400, { detail: 'Recusado.' }));
+
+    expect(await servico.finalizar()).toBe('recusado');
+    expect(servico.pendentes()).toBe(0);
+  });
+
+  it('finalizar devolve pendente quando o próprio treino continua na fila', async () => {
+    registrar.mockRejectedValueOnce(erroHttp(503));
+    const servico = criar();
+    servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+
+    expect(await servico.finalizar()).toBe('pendente');
+  });
+
+  it.each([408, 429])('%i mantém na fila e interrompe o envio', async (status) => {
+    registrar.mockRejectedValue(erroHttp(0));
+    const servico = criar();
+    for (let i = 0; i < 2; i++) {
+      servico.iniciar(ficha, divisao);
+      servico.atualizarSerie(0, 0, { concluida: true });
+      await servico.finalizar();
+    }
+    registrar.mockReset();
+    registrar.mockRejectedValue(erroHttp(status, { detail: 'Tente depois.' }));
+
+    await servico.enviarPendentes();
+
+    expect(registrar).toHaveBeenCalledTimes(1);
+    expect(servico.pendentes()).toBe(2);
+    expect(servico.comErro()).toEqual([]);
+  });
+
   it('401 mantém na fila', async () => {
-    registrar.mockRejectedValue(erroHttp(401, { title: 'Não autenticado', detail: 'Token expirado.' }));
+    registrar.mockRejectedValue(
+      erroHttp(401, { title: 'Não autenticado', detail: 'Token expirado.' }),
+    );
     const servico = criar();
     servico.iniciar(ficha, divisao);
     servico.atualizarSerie(0, 0, { concluida: true });
@@ -461,6 +525,143 @@ describe('SessaoLocalService', () => {
     expect(JSON.parse(localStorage.getItem('sessoes-com-erro:u1')!)).toEqual([]);
   });
 
+  it('finalizar sem conseguir gravar a fila mantém o treino e avisa', async () => {
+    const setItemOriginal = Storage.prototype.setItem;
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      chave: string,
+      valor: string,
+    ) {
+      if (chave.startsWith('sessoes-pendentes:')) throw new Error('QuotaExceededError');
+      setItemOriginal.call(this, chave, valor);
+    });
+    try {
+      const servico = criar();
+      servico.iniciar(ficha, divisao);
+      servico.atualizarSerie(0, 0, { concluida: true });
+      const antes = servico.emAndamento();
+
+      await expect(servico.finalizar()).rejects.toThrow(
+        'Não foi possível salvar o treino no aparelho. Libere espaço e tente de novo.',
+      );
+
+      expect(servico.emAndamento()).toEqual(antes);
+      expect(JSON.parse(localStorage.getItem('sessao-em-andamento:u1')!)).toEqual(antes);
+      expect(servico.pendentes()).toBe(0);
+      expect(registrar).not.toHaveBeenCalled();
+    } finally {
+      setItem.mockRestore();
+    }
+  });
+
+  it('finalizar grava a fila antes de apagar o treino em andamento', async () => {
+    registrar.mockRejectedValue(erroHttp(0));
+    const servico = criar();
+    servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+    const ordem: string[] = [];
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((chave: string) => {
+      ordem.push(`set ${chave}`);
+    });
+    const removeItem = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation((chave: string) => {
+        ordem.push(`remove ${chave}`);
+      });
+    try {
+      await servico.finalizar();
+    } finally {
+      setItem.mockRestore();
+      removeItem.mockRestore();
+    }
+
+    const gravouFila = ordem.indexOf('set sessoes-pendentes:u1');
+    expect(gravouFila).toBeGreaterThanOrEqual(0);
+    expect(gravouFila).toBeLessThan(ordem.indexOf('remove sessao-em-andamento:u1'));
+  });
+
+  it('adicionarSerie não passa de 50 séries', () => {
+    const servico = criar();
+    servico.iniciar(ficha, divisao);
+    for (let i = 0; i < 60; i++) servico.adicionarSerie(0);
+
+    const series = servico.emAndamento()!.exercicios[0].series;
+    expect(series.length).toBe(50);
+    expect(series.at(-1)!.numero).toBe(50);
+  });
+
+  it('itens inválidos no storage são ignorados sem bloquear os demais', async () => {
+    const valido: SessaoRequest = {
+      clientId: 'c-ok',
+      divisaoId: 'd1',
+      divisaoNome: 'Treino A',
+      iniciadaEm: '2026-10-18T10:00:00Z',
+      finalizadaEm: '2026-10-18T10:40:00Z',
+      observacao: null,
+      series: [
+        { itemDivisaoId: 'i1', exercicioId: 'e-i1', numeroSerie: 1, repeticoes: 10, cargaKg: 40 },
+      ],
+    };
+    localStorage.setItem(
+      'sessoes-pendentes:u1',
+      JSON.stringify([null, 'x', { clientId: 1 }, valido]),
+    );
+    localStorage.setItem(
+      'sessoes-com-erro:u1',
+      JSON.stringify([
+        null,
+        { sessao: null, mensagem: 'a' },
+        { sessao: valido, mensagem: 7 },
+        { sessao: valido, mensagem: 'Recusado.' },
+      ]),
+    );
+    registrar.mockResolvedValue(sessaoSalva);
+
+    const servico = criar();
+
+    expect(servico.pendentes()).toBe(1);
+    expect(servico.comErro()).toEqual([{ sessao: valido, mensagem: 'Recusado.' }]);
+    await servico.enviarPendentes();
+    expect(registrar).toHaveBeenCalledTimes(1);
+    expect(registrar.mock.calls[0][0]).toEqual(valido);
+    expect(servico.pendentes()).toBe(0);
+  });
+
+  it('treino em andamento com exercício sem lista de séries é descartado', () => {
+    localStorage.setItem(
+      'sessao-em-andamento:u1',
+      JSON.stringify({ clientId: 'c1', exercicios: [{ itemDivisaoId: 'i1', series: null }] }),
+    );
+
+    const servico = criar();
+
+    expect(servico.emAndamento()).toBeNull();
+    expect(localStorage.getItem('sessao-em-andamento:u1')).toBeNull();
+  });
+
+  it('gera clientId UUID v4 sem crypto.randomUUID (HTTP em rede local)', () => {
+    const original = Object.getOwnPropertyDescriptor(crypto, 'randomUUID');
+    Object.defineProperty(crypto, 'randomUUID', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    try {
+      const servico = criar();
+      const a = servico.iniciar(ficha, divisao).clientId;
+      const b = servico.iniciar(ficha, divisao).clientId;
+
+      const v4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      expect(a).toMatch(v4);
+      expect(b).toMatch(v4);
+      expect(a).not.toBe(b);
+    } finally {
+      if (original) Object.defineProperty(crypto, 'randomUUID', original);
+      else delete (crypto as { randomUUID?: unknown }).randomUUID;
+    }
+    expect(typeof crypto.randomUUID).toBe('function');
+  });
+
   it('storageCorrompidoComecaDoZero', () => {
     localStorage.setItem('sessao-em-andamento:u1', '{x');
     localStorage.setItem('sessoes-pendentes:u1', '{"nao":"lista"}');
@@ -475,7 +676,7 @@ describe('SessaoLocalService', () => {
     expect(localStorage.getItem('sessoes-pendentes:u1')).toBeNull();
   });
 
-  it('localStorage indisponível não lança', async () => {
+  it('localStorage indisponível não lança ao ler nem ao editar, e finalizar avisa', async () => {
     const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('SecurityError');
     });
@@ -490,7 +691,11 @@ describe('SessaoLocalService', () => {
       servico.iniciar(ficha, divisao);
       servico.atualizarSerie(0, 0, { concluida: true });
       expect(servico.emAndamento()!.exercicios[0].series[0].concluida).toBe(true);
-      expect(await servico.finalizar()).toBe('enviado');
+      await expect(servico.finalizar()).rejects.toThrow(
+        'Não foi possível salvar o treino no aparelho.',
+      );
+      expect(servico.emAndamento()).not.toBeNull();
+      expect(registrar).not.toHaveBeenCalled();
     } finally {
       getItem.mockRestore();
       setItem.mockRestore();

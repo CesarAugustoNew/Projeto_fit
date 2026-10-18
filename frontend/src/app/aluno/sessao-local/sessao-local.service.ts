@@ -13,7 +13,10 @@ import {
 } from './sessao-local.model';
 
 const ERRO_NENHUMA_SERIE = 'Conclua pelo menos uma série para finalizar o treino.';
+const ERRO_SALVAR = 'Não foi possível salvar o treino no aparelho. Libere espaço e tente de novo.';
 const RECUSA_PADRAO = 'O servidor recusou este treino.';
+/** Limite de `numeroSerie` aceito pelo back. */
+const MAX_SERIES = 50;
 
 /** Estado local de um usuário; `usuarioId` null = sem usuário, só em memória. */
 interface EstadoLocal {
@@ -23,7 +26,13 @@ interface EstadoLocal {
   comErro: EnvioComErro[];
 }
 
-type Chave = 'sessao-em-andamento' | 'sessoes-pendentes' | 'sessoes-com-erro';
+type Campo = 'emAndamento' | 'pendentes' | 'comErro';
+
+const PREFIXO: Record<Campo, string> = {
+  emAndamento: 'sessao-em-andamento',
+  pendentes: 'sessoes-pendentes',
+  comErro: 'sessoes-com-erro',
+};
 
 /**
  * Treino em andamento e fila de envio de sessões, persistidos no `localStorage`
@@ -40,7 +49,9 @@ export class SessaoLocalService {
     computation: (usuarioId) => carregar(usuarioId),
   });
 
-  readonly emAndamento: Signal<SessaoEmAndamento | null> = computed(() => this.estado().emAndamento);
+  readonly emAndamento: Signal<SessaoEmAndamento | null> = computed(
+    () => this.estado().emAndamento,
+  );
   readonly pendentes: Signal<number> = computed(() => this.estado().pendentes.length);
   readonly comErro: Signal<EnvioComErro[]> = computed(() => this.estado().comErro);
 
@@ -54,46 +65,52 @@ export class SessaoLocalService {
 
   iniciar(ficha: Ficha, divisao: Divisao): SessaoEmAndamento {
     const sessao: SessaoEmAndamento = {
-      clientId: crypto.randomUUID(),
+      clientId: gerarUuid(),
       fichaId: ficha.id,
       divisaoId: divisao.id,
       divisaoNome: divisao.nome,
       iniciadaEm: new Date().toISOString(),
       observacao: '',
-      exercicios: divisao.itens.map(
-        (item): ExercicioEmAndamento => ({
-          itemDivisaoId: item.id,
-          exercicioId: item.exercicioId,
-          exercicioNome: item.exercicioNome,
-          prescricao: {
-            series: item.series,
-            repeticoes: item.repeticoes,
-            cargaKg: item.cargaKg,
-            descansoSeg: item.descansoSeg,
-            observacao: item.observacao,
-          },
-          series: Array.from({ length: item.series }, (_, i) => ({
-            numero: i + 1,
-            cargaKg: item.cargaKg,
-            repeticoes: repeticoesSugeridas(item.repeticoes),
-            concluida: false,
-          })),
-        }),
-      ),
+      exercicios: divisao.itens.map((item): ExercicioEmAndamento => ({
+        itemDivisaoId: item.id,
+        exercicioId: item.exercicioId,
+        exercicioNome: item.exercicioNome,
+        prescricao: {
+          series: item.series,
+          repeticoes: item.repeticoes,
+          cargaKg: item.cargaKg,
+          descansoSeg: item.descansoSeg,
+          observacao: item.observacao,
+        },
+        series: Array.from({ length: item.series }, (_, i) => ({
+          numero: i + 1,
+          cargaKg: item.cargaKg,
+          repeticoes: repeticoesSugeridas(item.repeticoes),
+          concluida: false,
+        })),
+      })),
     };
-    this.gravarEmAndamento(sessao);
+    this.gravar('emAndamento', sessao);
     return sessao;
   }
 
-  atualizarSerie(exercicioIndex: number, serieIndex: number, mudanca: Partial<SerieEmAndamento>): void {
+  atualizarSerie(
+    exercicioIndex: number,
+    serieIndex: number,
+    mudanca: Partial<SerieEmAndamento>,
+  ): void {
     this.alterarExercicio(exercicioIndex, (exercicio) => ({
       ...exercicio,
-      series: exercicio.series.map((serie, i) => (i === serieIndex ? { ...serie, ...mudanca } : serie)),
+      series: exercicio.series.map((serie, i) =>
+        i === serieIndex ? { ...serie, ...mudanca } : serie,
+      ),
     }));
   }
 
-  /** Nova série copiando carga e repetições da última. */
+  /** Nova série copiando carga e repetições da última (até {@link MAX_SERIES}). */
   adicionarSerie(exercicioIndex: number): void {
+    if ((this.estado().emAndamento?.exercicios[exercicioIndex]?.series.length ?? 0) >= MAX_SERIES)
+      return;
     this.alterarExercicio(exercicioIndex, (exercicio) => {
       const ultima = exercicio.series.at(-1);
       const nova: SerieEmAndamento = {
@@ -108,14 +125,14 @@ export class SessaoLocalService {
 
   atualizarObservacao(texto: string): void {
     const atual = this.estado().emAndamento;
-    if (atual) this.gravarEmAndamento({ ...atual, observacao: texto });
+    if (atual) this.gravar('emAndamento', { ...atual, observacao: texto });
   }
 
   descartar(): void {
-    this.gravarEmAndamento(null);
+    this.gravar('emAndamento', null);
   }
 
-  async finalizar(): Promise<'enviado' | 'pendente'> {
+  async finalizar(): Promise<'enviado' | 'pendente' | 'recusado'> {
     const atual = this.estado().emAndamento;
     const series = atual ? seriesConcluidas(atual) : [];
     if (!atual || series.length === 0) throw new Error(ERRO_NENHUMA_SERIE);
@@ -129,12 +146,16 @@ export class SessaoLocalService {
       observacao: atual.observacao.trim() || null,
       series,
     };
-    // Enfileira antes de limpar o em andamento: nunca há um instante sem o treino no storage.
-    this.gravarPendentes([...this.estado().pendentes, req]);
-    this.gravarEmAndamento(null);
+    // Só limpa o em andamento depois que a fila foi gravada: o treino nunca fica fora do storage.
+    if (!this.gravarSeguro('pendentes', [...this.estado().pendentes, req]))
+      throw new Error(ERRO_SALVAR);
+    this.gravar('emAndamento', null);
 
     await this.enviarPendentes();
-    return this.estado().pendentes.length === 0 ? 'enviado' : 'pendente';
+    const { pendentes, comErro } = this.estado();
+    if (pendentes.some((s) => s.clientId === req.clientId)) return 'pendente';
+    if (comErro.some((e) => e.sessao.clientId === req.clientId)) return 'recusado';
+    return 'enviado';
   }
 
   /** Envia a fila em ordem, um por vez; chamadas durante um envio recebem a mesma Promise. */
@@ -144,7 +165,10 @@ export class SessaoLocalService {
   }
 
   descartarComErro(index: number): void {
-    this.gravarComErro(this.estado().comErro.filter((_, i) => i !== index));
+    this.gravar(
+      'comErro',
+      this.estado().comErro.filter((_, i) => i !== index),
+    );
   }
 
   private async executarEnvio(): Promise<void> {
@@ -158,12 +182,16 @@ export class SessaoLocalService {
         try {
           await this.sessaoService.registrar(proxima);
         } catch (erro) {
-          if (this.estado().usuarioId !== usuarioId) return;
-          if (deveTentarDeNovo(erro)) return;
-          this.gravarComErro([...this.estado().comErro, { sessao: proxima, mensagem: mensagemDeRecusa(erro) }]);
+          if (this.estado().usuarioId !== usuarioId || deveTentarDeNovo(erro)) return;
+          const recusa: EnvioComErro = { sessao: proxima, mensagem: mensagemDeRecusa(erro) };
+          // Sem conseguir gravar a recusa, o treino fica na fila (nada se perde) e o envio para.
+          if (!this.gravarSeguro('comErro', [...this.estado().comErro, recusa])) return;
         }
         if (this.estado().usuarioId !== usuarioId) return;
-        this.gravarPendentes(this.estado().pendentes.filter((s) => s.clientId !== proxima.clientId));
+        this.gravar(
+          'pendentes',
+          this.estado().pendentes.filter((s) => s.clientId !== proxima.clientId),
+        );
       }
     } finally {
       // Síncrono após a última leitura da fila: quem enfileirar depois inicia um novo envio.
@@ -171,38 +199,42 @@ export class SessaoLocalService {
     }
   }
 
-  private alterarExercicio(index: number, alterar: (e: ExercicioEmAndamento) => ExercicioEmAndamento): void {
+  private alterarExercicio(
+    index: number,
+    alterar: (e: ExercicioEmAndamento) => ExercicioEmAndamento,
+  ): void {
     const atual = this.estado().emAndamento;
     if (!atual || !atual.exercicios[index]) return;
-    this.gravarEmAndamento({
+    this.gravar('emAndamento', {
       ...atual,
       exercicios: atual.exercicios.map((e, i) => (i === index ? alterar(e) : e)),
     });
   }
 
-  private gravarEmAndamento(emAndamento: SessaoEmAndamento | null): void {
-    this.estado.update((e) => ({ ...e, emAndamento }));
-    this.persistir('sessao-em-andamento', emAndamento);
+  /** Atualiza o estado e tenta gravar; se o storage falhar, o estado segue em memória. */
+  private gravar<C extends Campo>(campo: C, valor: EstadoLocal[C]): void {
+    this.estado.update((e) => ({ ...e, [campo]: valor }));
+    this.persistir(campo, valor);
   }
 
-  private gravarPendentes(pendentes: SessaoRequest[]): void {
-    this.estado.update((e) => ({ ...e, pendentes }));
-    this.persistir('sessoes-pendentes', pendentes);
+  /** Grava primeiro no storage e só então no estado; se o storage falhar, nada muda. */
+  private gravarSeguro<C extends Campo>(campo: C, valor: EstadoLocal[C]): boolean {
+    if (!this.persistir(campo, valor)) return false;
+    this.estado.update((e) => ({ ...e, [campo]: valor }));
+    return true;
   }
 
-  private gravarComErro(comErro: EnvioComErro[]): void {
-    this.estado.update((e) => ({ ...e, comErro }));
-    this.persistir('sessoes-com-erro', comErro);
-  }
-
-  private persistir(chave: Chave, valor: unknown): void {
+  /** `true` se gravou (ou se não há usuário, caso em que o estado é só em memória). */
+  private persistir(campo: Campo, valor: unknown): boolean {
     const usuarioId = this.estado().usuarioId;
-    if (!usuarioId) return;
+    if (!usuarioId) return true;
+    const chave = `${PREFIXO[campo]}:${usuarioId}`;
     try {
-      if (valor === null) localStorage.removeItem(`${chave}:${usuarioId}`);
-      else localStorage.setItem(`${chave}:${usuarioId}`, JSON.stringify(valor));
+      if (valor === null) localStorage.removeItem(chave);
+      else localStorage.setItem(chave, JSON.stringify(valor));
+      return true;
     } catch {
-      // Storage indisponível ou cheio: o estado segue em memória.
+      return false;
     }
   }
 }
@@ -211,14 +243,23 @@ function carregar(usuarioId: string | null): EstadoLocal {
   if (!usuarioId) return { usuarioId, emAndamento: null, pendentes: [], comErro: [] };
   return {
     usuarioId,
-    emAndamento: ler(`sessao-em-andamento:${usuarioId}`, ehSessaoEmAndamento, null),
-    pendentes: ler(`sessoes-pendentes:${usuarioId}`, Array.isArray, []),
-    comErro: ler(`sessoes-com-erro:${usuarioId}`, Array.isArray, []),
+    emAndamento: ler(`${PREFIXO.emAndamento}:${usuarioId}`, null, (v) =>
+      ehSessaoEmAndamento(v) ? v : undefined,
+    ),
+    pendentes: ler(`${PREFIXO.pendentes}:${usuarioId}`, [], (v) =>
+      Array.isArray(v) ? v.filter(ehSessaoRequest) : undefined,
+    ),
+    comErro: ler(`${PREFIXO.comErro}:${usuarioId}`, [], (v) =>
+      Array.isArray(v) ? v.filter(ehEnvioComErro) : undefined,
+    ),
   };
 }
 
-/** Lê e valida uma chave; JSON inválido ou formato inesperado → padrão (e apaga a chave). */
-function ler<T>(chave: string, valido: (v: unknown) => boolean, padrao: T): T {
+/**
+ * Lê uma chave e converte o valor; `undefined` na conversão = formato inválido.
+ * JSON inválido ou formato inesperado → padrão (e apaga a chave); storage indisponível → padrão.
+ */
+function ler<T>(chave: string, padrao: T, converter: (valor: unknown) => T | undefined): T {
   let texto: string | null;
   try {
     texto = localStorage.getItem(chave);
@@ -227,8 +268,8 @@ function ler<T>(chave: string, valido: (v: unknown) => boolean, padrao: T): T {
   }
   if (texto === null) return padrao;
   try {
-    const valor: unknown = JSON.parse(texto);
-    if (valido(valor)) return valor as T;
+    const convertido = converter(JSON.parse(texto));
+    if (convertido !== undefined) return convertido;
   } catch {
     // cai na limpeza abaixo
   }
@@ -240,38 +281,62 @@ function ler<T>(chave: string, valido: (v: unknown) => boolean, padrao: T): T {
   return padrao;
 }
 
-function ehSessaoEmAndamento(valor: unknown): boolean {
+function ehObjeto(valor: unknown): valor is Record<string, unknown> {
+  return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
+}
+
+function ehSessaoEmAndamento(valor: unknown): valor is SessaoEmAndamento {
   return (
-    typeof valor === 'object' &&
-    valor !== null &&
-    typeof (valor as SessaoEmAndamento).clientId === 'string' &&
-    Array.isArray((valor as SessaoEmAndamento).exercicios)
+    ehObjeto(valor) &&
+    typeof valor['clientId'] === 'string' &&
+    Array.isArray(valor['exercicios']) &&
+    valor['exercicios'].every((e) => ehObjeto(e) && Array.isArray(e['series']))
   );
+}
+
+function ehSessaoRequest(valor: unknown): valor is SessaoRequest {
+  return ehObjeto(valor) && typeof valor['clientId'] === 'string';
+}
+
+function ehEnvioComErro(valor: unknown): valor is EnvioComErro {
+  return (
+    ehObjeto(valor) && ehSessaoRequest(valor['sessao']) && typeof valor['mensagem'] === 'string'
+  );
+}
+
+/** `crypto.randomUUID` só existe em contexto seguro (HTTPS/localhost); em HTTP na rede local, gera um UUID v4. */
+function gerarUuid(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // versão 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variante RFC 4122
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 function seriesConcluidas(sessao: SessaoEmAndamento): SerieRequest[] {
   return sessao.exercicios.flatMap((exercicio) =>
     exercicio.series
       .filter((serie) => serie.concluida)
-      .map(
-        (serie): SerieRequest => ({
-          itemDivisaoId: exercicio.itemDivisaoId,
-          exercicioId: exercicio.exercicioId,
-          numeroSerie: serie.numero,
-          repeticoes: serie.repeticoes ?? 0,
-          cargaKg: serie.cargaKg,
-        }),
-      ),
+      .map((serie): SerieRequest => ({
+        itemDivisaoId: exercicio.itemDivisaoId,
+        exercicioId: exercicio.exercicioId,
+        numeroSerie: serie.numero,
+        repeticoes: serie.repeticoes ?? 0,
+        cargaKg: serie.cargaKg,
+      })),
   );
 }
 
-/** Rede (0), 5xx, 401 ou erro desconhecido → manter na fila e tentar depois. */
+/** Rede (0), 401, 408, 429, 5xx ou erro desconhecido → manter na fila e tentar depois. */
 function deveTentarDeNovo(erro: unknown): boolean {
   if (!(erro instanceof HttpErrorResponse)) return true;
-  return erro.status === 0 || erro.status === 401 || erro.status >= 500 || erro.status < 400;
+  const { status } = erro;
+  return status < 400 || status >= 500 || status === 401 || status === 408 || status === 429;
 }
 
 function mensagemDeRecusa(erro: unknown): string {
-  const detail = erro instanceof HttpErrorResponse ? (erro.error as { detail?: unknown } | null)?.detail : null;
+  const detail =
+    erro instanceof HttpErrorResponse ? (erro.error as { detail?: unknown } | null)?.detail : null;
   return typeof detail === 'string' && detail.trim() ? detail : RECUSA_PADRAO;
 }
