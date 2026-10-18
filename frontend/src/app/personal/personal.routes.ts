@@ -6,6 +6,7 @@ import { Dashboard } from './dashboard/dashboard';
 const itens: ItemNav[] = [
   { rota: '/personal/dashboard', rotulo: 'Dashboard', icone: 'dashboard' },
   { rota: '/personal/alunos', rotulo: 'Alunos', icone: 'group' },
+  { rota: '/personal/exercicios', rotulo: 'Exercícios', icone: 'fitness_center' },
 ];
 
 export const personalRoutes: Routes = [
@@ -32,6 +33,11 @@ export const personalRoutes: Routes = [
       {
         path: 'alunos/:id/editar',
         loadComponent: () => import('./alunos/form-aluno/form-aluno').then((m) => m.FormAluno),
+      },
+      {
+        path: 'exercicios',
+        loadComponent: () =>
+          import('./exercicios/lista-exercicios/lista-exercicios').then((m) => m.ListaExercicios),
       },
     ],
   },

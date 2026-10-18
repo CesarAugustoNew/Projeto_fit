@@ -1,0 +1,70 @@
+<section class="lista-exercicios">
+  <header class="cabecalho">
+    <h1>Exercícios</h1>
+    <a mat-flat-button routerLink="/personal/exercicios/novo">
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      Novo exercício
+    </a>
+  </header>
+
+  <mat-button-toggle-group
+    class="filtro"
+    aria-label="Filtrar por status"
+    [value]="filtro()"
+    (change)="trocarFiltro($event.value)"
+  >
+    <mat-button-toggle value="ATIVOS">Ativos</mat-button-toggle>
+    <mat-button-toggle value="INATIVOS">Inativos</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <mat-form-field class="campo" appearance="outline">
+    <mat-label>Grupo muscular</mat-label>
+    <mat-select [value]="grupo()" (selectionChange)="trocarGrupo($event.value)">
+      <mat-option [value]="null">Todos</mat-option>
+      @for (g of grupos; track g) {
+        <mat-option [value]="g">{{ rotulos[g] }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="campo" appearance="outline">
+    <mat-label>Buscar exercício</mat-label>
+    <input matInput type="search" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+  </mat-form-field>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando...</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar os exercícios.</p>
+  } @else if (visiveis().length === 0) {
+    <p class="mensagem">
+      {{
+        filtro() === 'INATIVOS' && !grupo() && !busca().trim()
+          ? 'Nenhum exercício inativo.'
+          : 'Nenhum exercício encontrado.'
+      }}
+    </p>
+  } @else {
+    <ul class="itens">
+      @for (exercicio of visiveis(); track exercicio.id) {
+        <li>
+          <a class="item" [routerLink]="['/personal/exercicios', exercicio.id, 'editar']">
+            <span class="nome">{{ exercicio.nome }}</span>
+            <span class="grupo">{{ rotulos[exercicio.grupoMuscular] }}</span>
+          </a>
+          @if (linkSeguro(exercicio.videoUrl); as video) {
+            <a
+              class="video"
+              [href]="video"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ver vídeo"
+            >
+              <mat-icon fontSet="material-symbols-outlined">play_circle</mat-icon>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
