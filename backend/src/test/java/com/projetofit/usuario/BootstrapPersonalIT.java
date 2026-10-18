@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.projetofit.TesteIntegracao;
+import com.projetofit.ficha.FichaRepository;
 import com.projetofit.aluno.AlunoRepository;
 import com.projetofit.exercicio.ExercicioRepository;
 import java.util.List;
@@ -36,8 +37,12 @@ class BootstrapPersonalIT extends TesteIntegracao {
     @Autowired
     ExercicioRepository exercicioRepository;
 
+    @Autowired
+    FichaRepository fichaRepository;
+
     @BeforeEach
     void limpar() {
+        fichaRepository.deleteAll();
         exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
