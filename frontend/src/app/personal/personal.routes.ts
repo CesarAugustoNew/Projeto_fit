@@ -20,6 +20,14 @@ export const personalRoutes: Routes = [
         path: 'alunos',
         loadComponent: () => import('./alunos/lista-alunos/lista-alunos').then((m) => m.ListaAlunos),
       },
+      {
+        path: 'alunos/novo',
+        loadComponent: () => import('./alunos/form-aluno/form-aluno').then((m) => m.FormAluno),
+      },
+      {
+        path: 'alunos/:id/editar',
+        loadComponent: () => import('./alunos/form-aluno/form-aluno').then((m) => m.FormAluno),
+      },
     ],
   },
 ];

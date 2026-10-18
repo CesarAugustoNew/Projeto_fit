@@ -1,0 +1,23 @@
+.form-aluno {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+
+  h1 {
+    margin: 0 0 16px;
+    font-size: 1.5rem;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
