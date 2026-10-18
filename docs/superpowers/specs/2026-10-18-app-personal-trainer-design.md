@@ -43,7 +43,7 @@ Modelos de ficha reutilizáveis, avaliação física (peso, medidas, % de gordur
 
 - **Supabase Auth** cuida de credenciais, convite, redefinição de senha e emissão do JWT.
 - O **Angular** usa `supabase-js` **somente para autenticação**. Todos os dados passam pela API Spring.
-- A **API Spring** é *OAuth2 Resource Server*: valida o JWT pela chave pública do Supabase (JWKS em `https://<projeto>.supabase.co/auth/v1/.well-known/jwks.json`). O projeto Supabase deve usar **chaves de assinatura assimétricas** (JWT Signing Keys); se estiver no segredo HS256 legado, migrar no painel.
+- A **API Spring** é *OAuth2 Resource Server*: valida o JWT pela chave pública do Supabase (JWKS em `https://<projeto>.supabase.co/auth/v1/.well-known/jwks.json`). O projeto Supabase deve usar **chaves de assinatura assimétricas** (JWT Signing Keys); se estiver no segredo HS256 legado, migrar no painel. O decoder aceita **ES256** (padrão do Supabase) e RS256, e valida `iss = {SUPABASE_URL}/auth/v1` e `aud = authenticated`.
 - O Spring é o **único dono das regras de negócio** e o único cliente do banco.
 - Região: Render em Virginia e Supabase em `us-east-1`, lado a lado, para minimizar a latência API ↔ banco.
 
@@ -57,7 +57,7 @@ Modelos de ficha reutilizáveis, avaliação física (peso, medidas, % de gordur
 ## 4. Back-end
 
 ### Stack
-Java 21, Spring Boot 3 (última versão estável no início da implementação), Spring Web, Spring Data JPA, Spring Security (OAuth2 Resource Server), Bean Validation, Flyway, Spring Boot Actuator, PostgreSQL driver. Testes: JUnit 5, Mockito, Testcontainers.
+Java 21, Spring Boot 4.1 (Spring Framework 7, Jackson 3, Hibernate 7), Spring Web MVC, Spring Data JPA, Spring Security (OAuth2 Resource Server), Bean Validation, Flyway, Spring Boot Actuator, PostgreSQL driver. Testes: JUnit 5, Mockito, Testcontainers.
 
 ### Organização: pacotes por funcionalidade, camadas dentro de cada um
 ```
@@ -249,7 +249,7 @@ Base `/api`. JSON. Datas em ISO-8601. Listas longas paginadas (`page`, `size`) n
 ## 8. Front-end
 
 ### Stack
-Angular (última versão estável no início da implementação), standalone components, signals, Angular Material, `@supabase/supabase-js`, Chart.js via `ng2-charts`. Layout **mobile-first**, com breakpoints do Angular CDK (`BreakpointObserver`).
+Angular 22 (requer Node 24 LTS), testes com Vitest (padrão do Angular CLI), standalone components, signals, Angular Material, `@supabase/supabase-js`, Chart.js via `ng2-charts`. Layout **mobile-first**, com breakpoints do Angular CDK (`BreakpointObserver`).
 
 ### Organização
 ```
