@@ -1,5 +1,5 @@
 <section class="detalhe-sessao">
-  <a class="voltar" mat-button [routerLink]="voltarPara() ?? '/aluno/historico'">Voltar</a>
+  <a class="voltar" mat-button [routerLink]="linkVoltar()">Voltar</a>
 
   @if (carregando()) {
     <p class="mensagem">Carregando…</p>

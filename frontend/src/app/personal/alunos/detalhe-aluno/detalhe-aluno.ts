@@ -5,12 +5,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { confirmar } from '../../../shared/confirmacao/confirmacao-dialog';
 import { FichasDoAluno } from '../../fichas/fichas-do-aluno/fichas-do-aluno';
+import { SessoesDoAluno } from '../../sessoes/sessoes-do-aluno/sessoes-do-aluno';
 import { Aluno, ROTULO_STATUS } from '../aluno.model';
 import { AlunoService } from '../aluno.service';
 
 @Component({
   selector: 'app-detalhe-aluno',
-  imports: [RouterLink, MatButtonModule, FichasDoAluno],
+  imports: [RouterLink, MatButtonModule, FichasDoAluno, SessoesDoAluno],
   templateUrl: './detalhe-aluno.html',
   styleUrl: './detalhe-aluno.scss',
 })

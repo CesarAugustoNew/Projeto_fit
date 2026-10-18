@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Aluno } from '../aluno.model';
 import { AlunoService } from '../aluno.service';
+import { SessaoService } from '../../../shared/sessao/sessao.service';
 import { FichaService } from '../../fichas/ficha.service';
 import { DetalheAluno } from './detalhe-aluno';
 
@@ -39,6 +40,12 @@ describe('DetalheAluno', () => {
         provideRouter([]),
         { provide: AlunoService, useValue: { buscar, alterarStatus, reenviarConvite } },
         { provide: FichaService, useValue: { listarDoAluno: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: SessaoService,
+          useValue: {
+            doAluno: vi.fn().mockResolvedValue({ content: [], page: { size: 20, number: 0, totalElements: 0, totalPages: 0 } }),
+          },
+        },
         { provide: MatSnackBar, useValue: { open } },
         { provide: MatDialog, useValue: { open: dialogOpen } },
       ],

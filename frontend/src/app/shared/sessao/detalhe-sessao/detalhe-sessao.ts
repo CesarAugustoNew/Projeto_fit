@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { Sessao, SerieExecutada, duracaoMinutos, formatarDataHora } from '../sessao.model';
@@ -27,6 +27,15 @@ export class DetalheSessao {
   protected readonly grupos = signal<GrupoExercicio[]>([]);
   protected readonly carregando = signal(true);
   protected readonly erro = signal(false);
+
+  protected readonly linkVoltar = computed(() => {
+    const destino = this.voltarPara();
+    if (destino === 'aluno') {
+      const s = this.sessao();
+      return s ? `/personal/alunos/${s.alunoId}` : '/personal/alunos';
+    }
+    return destino ?? '/aluno/historico';
+  });
 
   protected readonly formatarDataHora = formatarDataHora;
   protected readonly duracaoMinutos = duracaoMinutos;

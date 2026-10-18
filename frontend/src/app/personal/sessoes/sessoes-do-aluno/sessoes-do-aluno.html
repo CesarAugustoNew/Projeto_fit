@@ -1,0 +1,32 @@
+<section class="sessoes">
+  <h2>Histórico de treinos</h2>
+
+  @if (sessoes().length > 0) {
+    <ul class="itens">
+      @for (s of sessoes(); track s.id) {
+        <li>
+          <a class="item" [routerLink]="['/personal/sessoes', s.id]">
+            <span class="divisao">{{ s.divisaoNome }}</span>
+            <span class="data">{{ formatarDataHora(s.iniciadaEm) }}</span>
+            <span class="meta">
+              {{ duracaoMinutos(s.iniciadaEm, s.finalizadaEm) }} min · {{ s.quantidadeExercicios }}
+              {{ s.quantidadeExercicios === 1 ? 'exercício' : 'exercícios' }}
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar o histórico.</p>
+  } @else if (sessoes().length === 0) {
+    <p class="mensagem">Nenhum treino registrado ainda.</p>
+  }
+
+  @if (temMais() && !carregando()) {
+    <button mat-stroked-button type="button" class="mais" (click)="carregarMais()">Carregar mais</button>
+  }
+</section>

@@ -81,6 +81,11 @@ describe('DetalheSessao', () => {
     expect((el(g).querySelector('a.voltar') as HTMLAnchorElement).getAttribute('href')).toBe('/personal/alunos');
   });
 
+  it('voltarPara aluno aponta para o aluno da sessão', async () => {
+    const { fixture: f } = await montar(sessao, 'aluno');
+    expect((el(f).querySelector('a.voltar') as HTMLAnchorElement).getAttribute('href')).toBe('/personal/alunos/a1');
+  });
+
   it('mostra erro quando falha', async () => {
     const { fixture: f } = await montar(new Error('x'));
     expect(el(f).textContent).toContain('Não foi possível carregar o treino.');

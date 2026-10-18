@@ -50,6 +50,12 @@ export const personalRoutes: Routes = [
         canDeactivate: [descartarAlteracoesGuard],
       },
       {
+        path: 'sessoes/:id',
+        loadComponent: () =>
+          import('../shared/sessao/detalhe-sessao/detalhe-sessao').then((m) => m.DetalheSessao),
+        data: { voltarPara: 'aluno' },
+      },
+      {
         path: 'exercicios',
         loadComponent: () =>
           import('./exercicios/lista-exercicios/lista-exercicios').then((m) => m.ListaExercicios),
