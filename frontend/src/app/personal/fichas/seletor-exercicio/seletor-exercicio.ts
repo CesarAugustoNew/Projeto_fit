@@ -60,7 +60,8 @@ export async function escolherExercicio(dialog: MatDialog): Promise<Exercicio | 
   const ref = dialog.open<SeletorExercicio, undefined, Exercicio | null>(
     SeletorExercicio,
     celular
-      ? { width: '100%', maxWidth: '100vw', height: '100%', maxHeight: '100vh' }
+      ? // dvh: a altura visível, sem ficar atrás da barra do navegador do celular
+        { width: '100%', maxWidth: '100vw', height: '100dvh', maxHeight: '100dvh' }
       : { width: '560px', maxHeight: '90vh' },
   );
   return (await firstValueFrom(ref.afterClosed())) ?? null;

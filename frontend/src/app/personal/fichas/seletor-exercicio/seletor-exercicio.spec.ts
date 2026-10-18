@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { Exercicio, GrupoMuscular } from '../../exercicios/exercicio.model';
 import { ExercicioService } from '../../exercicios/exercicio.service';
 import { SeletorExercicio, escolherExercicio } from './seletor-exercicio';
@@ -94,6 +95,18 @@ describe('escolherExercicio', () => {
     await new Promise((r) => setTimeout(r));
     TestBed.tick();
   }
+
+  it('no celular ocupa a altura visível da tela (dvh)', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as never;
+    try {
+      const open = vi.fn().mockReturnValue({ afterClosed: () => of(null) });
+      expect(await escolherExercicio({ open } as unknown as MatDialog)).toBeNull();
+      expect(open.mock.calls[0][1]).toMatchObject({ height: '100dvh', maxHeight: '100dvh' });
+    } finally {
+      window.matchMedia = original;
+    }
+  });
 
   it('devolve null ao cancelar', async () => {
     TestBed.configureTestingModule({
