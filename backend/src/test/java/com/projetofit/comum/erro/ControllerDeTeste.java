@@ -33,6 +33,10 @@ class ControllerDeTeste {
     void param(@RequestParam @Min(1) int qtd) {
     }
 
+    @GetMapping("/obrigatorio")
+    void obrigatorio(@RequestParam String q) {
+    }
+
     @GetMapping("/nao-encontrado")
     void naoEncontrado() {
         throw new RecursoNaoEncontradoException("Aluno não encontrado");

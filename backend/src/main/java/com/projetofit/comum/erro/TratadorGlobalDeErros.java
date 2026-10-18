@@ -19,6 +19,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -81,6 +84,29 @@ public class TratadorGlobalDeErros extends ResponseEntityExceptionHandler {
             HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         return handleExceptionInternal(ex, problema(HttpStatus.NOT_FOUND, "Recurso não encontrado",
                 "Rota não encontrada."), headers, HttpStatus.NOT_FOUND, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return handleExceptionInternal(ex, problema(HttpStatus.METHOD_NOT_ALLOWED, "Método não permitido",
+                "Método " + ex.getMethod() + " não é suportado nesta rota."), headers,
+                HttpStatus.METHOD_NOT_ALLOWED, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return handleExceptionInternal(ex, problema(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Tipo de conteúdo não suportado", "Envie o corpo em JSON (application/json)."), headers,
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return handleExceptionInternal(ex, problema(HttpStatus.BAD_REQUEST, "Dados inválidos",
+                "Parâmetro '" + ex.getParameterName() + "' é obrigatório."), headers, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)

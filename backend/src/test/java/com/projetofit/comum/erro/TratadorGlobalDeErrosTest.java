@@ -3,9 +3,12 @@ package com.projetofit.comum.erro;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.TEXT_PLAIN;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,5 +113,33 @@ class TratadorGlobalDeErrosTest {
                 .andExpect(jsonPath("$.title").value("Dados inválidos"))
                 .andExpect(jsonPath("$.detail").value("Um ou mais campos são inválidos."))
                 .andExpect(jsonPath("$.errors.qtd").exists());
+    }
+
+    @Test
+    void metodoNaoSuportadoRetorna405EmPtBr() throws Exception {
+        mvc.perform(delete("/teste/validacao"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", containsString("POST")))
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Método não permitido"))
+                .andExpect(jsonPath("$.detail").value("Método DELETE não é suportado nesta rota."));
+    }
+
+    @Test
+    void tipoDeConteudoNaoSuportadoRetorna415() throws Exception {
+        mvc.perform(post("/teste/validacao").contentType(TEXT_PLAIN).content("oi"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Tipo de conteúdo não suportado"))
+                .andExpect(jsonPath("$.detail").value("Envie o corpo em JSON (application/json)."));
+    }
+
+    @Test
+    void parametroAusenteRetorna400() throws Exception {
+        mvc.perform(get("/teste/obrigatorio"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Dados inválidos"))
+                .andExpect(jsonPath("$.detail").value("Parâmetro 'q' é obrigatório."));
     }
 }
