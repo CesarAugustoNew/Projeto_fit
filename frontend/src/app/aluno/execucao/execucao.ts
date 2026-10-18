@@ -59,17 +59,28 @@ export class Execucao implements OnInit {
     return texto;
   }
 
-  protected mudarCarga(ex: number, serie: number, valor: string): void {
-    const n = valor === '' ? NaN : Number(valor);
+  /**
+   * `final = false` (evento `input`): só grava se o texto já é um valor completo e válido,
+   * para não apagar o que o usuário está digitando. `final = true` (`change`): grava o
+   * valor ou `null` e limpa o campo quando inválido.
+   */
+  protected mudarCarga(ex: number, serie: number, evento: Event, final: boolean): void {
+    const campo = evento.target as HTMLInputElement;
+    const n = campo.value === '' ? NaN : Number(campo.value);
     const valida = Number.isFinite(n) && n >= 0 && n <= MAX_CARGA;
+    if (!valida && !final) return;
+    if (!valida) campo.value = '';
     this.local.atualizarSerie(ex, serie, { cargaKg: valida ? Math.round(n * 100) / 100 : null });
   }
 
-  protected mudarRepeticoes(ex: number, serie: number, valor: string): void {
-    const n = valor === '' ? NaN : Math.trunc(Number(valor));
-    if (Number.isFinite(n) && n >= 0 && n <= MAX_REPETICOES) {
+  protected mudarRepeticoes(ex: number, serie: number, evento: Event, final: boolean): void {
+    const campo = evento.target as HTMLInputElement;
+    const n = campo.value === '' ? NaN : Math.trunc(Number(campo.value));
+    const valida = Number.isFinite(n) && n >= 0 && n <= MAX_REPETICOES;
+    if (valida) {
       this.local.atualizarSerie(ex, serie, { repeticoes: n });
-    } else {
+    } else if (final) {
+      campo.value = '';
       // Série sem repetições válidas nunca fica marcada como concluída.
       this.local.atualizarSerie(ex, serie, { repeticoes: null, concluida: false });
     }
@@ -81,6 +92,8 @@ export class Execucao implements OnInit {
 
   protected async finalizar(): Promise<void> {
     if (this.finalizando()) return;
+    // Garante que um `change` pendente do campo em foco seja gravado antes de finalizar.
+    (document.activeElement as HTMLElement | null)?.blur();
     const andamento = this.local.emAndamento();
     if (!andamento) return;
     this.finalizando.set(true);

@@ -111,12 +111,49 @@ describe('Execucao', () => {
     expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 0, { cargaKg: 42.5 });
   });
 
-  it('digitar input não grava até confirmar (change)', async () => {
+  it('input com repetições válidas grava e libera Concluir sem change', async () => {
     const { fixture: f, sessaoLocal } = await montar(sessao());
+    const r = campo(f, 'Repetições', 2);
+    r.value = '10';
+    r.dispatchEvent(new Event('input'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 2, { repeticoes: 10 });
+    f.detectChanges();
+    const concluir = Array.from(el(f).querySelectorAll('button')).filter((b) =>
+      b.textContent?.includes('Concluir'),
+    );
+    expect(concluir[1].disabled).toBe(false);
+  });
+
+  it('input vazio ou inválido não grava nem apaga o campo', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const r = campo(f, 'Repetições', 0);
+    r.value = '';
+    r.dispatchEvent(new Event('input'));
     const c = campo(f, 'Carga (kg)', 0);
-    c.value = '42.5';
+    c.value = '-5';
     c.dispatchEvent(new Event('input'));
     expect(sessaoLocal.atualizarSerie).not.toHaveBeenCalled();
+    expect(c.value).toBe('-5');
+  });
+
+  it('change inválido grava null e limpa o campo', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const c = campo(f, 'Carga (kg)', 2);
+    c.value = '-5';
+    c.dispatchEvent(new Event('change'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 2, { cargaKg: null });
+    expect(c.value).toBe('');
+  });
+
+  it('finalizar tira o foco do campo ativo', async () => {
+    const { fixture: f } = await montar(sessao());
+    document.body.appendChild(el(f));
+    const c = campo(f, 'Repetições', 0);
+    c.focus();
+    expect(document.activeElement).toBe(c);
+    botao(f, 'Finalizar treino')!.click();
+    expect(document.activeElement).not.toBe(c);
+    await f.whenStable();
   });
 
   it('carga negativa ou acima do limite vira vazia', async () => {
