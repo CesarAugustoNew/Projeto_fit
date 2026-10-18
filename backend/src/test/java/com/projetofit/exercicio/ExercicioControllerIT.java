@@ -77,6 +77,13 @@ class ExercicioControllerIT extends TesteIntegracao {
     }
 
     @Test
+    void linkComEsquemaMaiusculoEhAceito() throws Exception {
+        criar("{\"nome\":\"Supino\",\"grupoMuscular\":\"PEITO\",\"videoUrl\":\"HTTPS://youtu.be/abc\"}")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.videoUrl").value("HTTPS://youtu.be/abc"));
+    }
+
+    @Test
     void linkDeVideoSemHttpRetorna400() throws Exception {
         criar("{\"nome\":\"Supino\",\"grupoMuscular\":\"PEITO\",\"videoUrl\":\"javascript:alert(1)\"}")
                 .andExpect(status().isBadRequest())
