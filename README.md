@@ -16,11 +16,13 @@ Aplicativo web para personal trainers acompanharem seus alunos: cadastro e convi
 | `SPRING_PROFILES_ACTIVE` | `dev` ou `prod` |
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | conexão Postgres (Session Pooler em prod) |
 | `SUPABASE_URL` | base do Auth/JWKS e do Admin API |
-| `SUPABASE_SERVICE_ROLE_KEY` | convites (Admin API); só a partir da Etapa 2 |
+| `SUPABASE_SERVICE_ROLE_KEY` | convites e exclusão de usuários (Admin API); obrigatória, a API não sobe sem ela |
 | `APP_PERSONAL_EMAIL` | bootstrap do personal |
 | `APP_FRONT_URL` | CORS e `redirectTo` dos convites (padrão `http://localhost:4200`) |
 
 Nunca versione segredos (`SUPABASE_SERVICE_ROLE_KEY`, senha do banco). A URL do Supabase e a anon key do front são públicas.
+
+Aviso: o SMTP padrão do Supabase só entrega e-mails (convites) para membros do projeto; para convidar alunos reais, configure um SMTP próprio.
 
 ## Configuração do Supabase (desenvolvimento)
 
@@ -37,7 +39,7 @@ Os arquivos `frontend/src/environments/environment*.ts` trazem placeholders (`ht
 
 ## Rodando localmente
 
-Com o back rodando (`docker compose up -d`, depois `cd backend && SPRING_PROFILES_ACTIVE=dev SUPABASE_URL=<url-dev> APP_PERSONAL_EMAIL=<email> ./mvnw spring-boot:run`) e o front (`cd frontend && npx ng serve`), acesse `http://localhost:4200`.
+Com o back rodando (`docker compose up -d`, depois `cd backend && SPRING_PROFILES_ACTIVE=dev SUPABASE_URL=<url-dev> SUPABASE_SERVICE_ROLE_KEY=<chave> APP_PERSONAL_EMAIL=<email> ./mvnw spring-boot:run`) e o front (`cd frontend && npx ng serve`), acesse `http://localhost:4200`.
 
 ## Testes
 

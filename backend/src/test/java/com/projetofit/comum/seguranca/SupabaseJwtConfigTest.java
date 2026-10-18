@@ -61,7 +61,7 @@ class SupabaseJwtConfigTest {
 
         String supabaseUrl = "http://127.0.0.1:" + servidor.getAddress().getPort();
         issuer = supabaseUrl + "/auth/v1";
-        AppProperties propriedades = new AppProperties(supabaseUrl, "personal@teste.com", "http://localhost:4200");
+        AppProperties propriedades = new AppProperties(supabaseUrl, "personal@teste.com", "http://localhost:4200", "chave-de-teste");
         SupabaseJwtConfig config = new SupabaseJwtConfig();
         decoder = config.jwtDecoder(propriedades, config.supabaseJwtValidator(propriedades));
     }

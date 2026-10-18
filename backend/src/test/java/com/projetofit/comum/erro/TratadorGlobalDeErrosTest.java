@@ -53,7 +53,8 @@ class TratadorGlobalDeErrosTest {
         mvc.perform(get("/teste/externo"))
                 .andExpect(status().isBadGateway())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
-                .andExpect(jsonPath("$.title").value("Falha em serviço externo"));
+                .andExpect(jsonPath("$.title").value("Falha em serviço externo"))
+                .andExpect(jsonPath("$.detail").value("Supabase indisponível"));
     }
 
     @Test

@@ -17,7 +17,7 @@ class UsuarioAtualResolverTest {
 
     private final UsuarioRepository repositorio = mock(UsuarioRepository.class);
     private final UsuarioAtualResolver resolver = new UsuarioAtualResolver(repositorio,
-            new AppProperties("https://teste.supabase.co", "personal@teste.com", "http://localhost:4200"));
+            new AppProperties("https://teste.supabase.co", "personal@teste.com", "http://localhost:4200", "chave-de-teste"));
 
     @Test
     void insercaoConcorrenteRelêOUsuario() {

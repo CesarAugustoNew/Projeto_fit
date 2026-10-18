@@ -23,3 +23,4 @@ app:
   supabase-url: ${SUPABASE_URL}
   personal-email: ${APP_PERSONAL_EMAIL}
   front-url: ${APP_FRONT_URL:http://localhost:4200}
+  supabase-service-role-key: ${SUPABASE_SERVICE_ROLE_KEY}
