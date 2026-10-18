@@ -39,6 +39,10 @@ export const personalRoutes: Routes = [
         loadComponent: () => import('./fichas/form-ficha/form-ficha').then((m) => m.FormFicha),
       },
       {
+        path: 'fichas/:id',
+        loadComponent: () => import('./fichas/ver-ficha/ver-ficha').then((m) => m.VerFicha),
+      },
+      {
         path: 'fichas/:id/editar',
         loadComponent: () => import('./fichas/form-ficha/form-ficha').then((m) => m.FormFicha),
       },
