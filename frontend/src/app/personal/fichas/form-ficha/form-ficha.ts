@@ -18,7 +18,7 @@ import { confirmar } from '../../../shared/confirmacao/confirmacao-dialog';
 import { EditorDivisao } from '../editor-divisao/editor-divisao';
 import { FichaRequest, hojeLocal } from '../ficha.model';
 import { FichaService } from '../ficha.service';
-import { criarDivisaoForm, DivisaoForm, paraDivisaoRequest } from '../form-ficha.model';
+import { criarDivisaoForm, DivisaoForm, naoVazio, paraDivisaoRequest } from '../form-ficha.model';
 
 const MAX_DIVISOES = 10;
 
@@ -181,11 +181,6 @@ export class FormFicha implements OnInit {
     const aluno = this.editando ? this.alunoDaFicha() : (this.alunoId() ?? null);
     await this.router.navigate(aluno ? ['/personal/alunos', aluno] : ['/personal/alunos']);
   }
-}
-
-/** Obrigatorio ignorando espacos nas pontas. */
-function naoVazio(control: AbstractControl<string>): ValidationErrors | null {
-  return control.value.trim() === '' ? { required: true } : null;
 }
 
 function aoMenosUma(control: AbstractControl): ValidationErrors | null {

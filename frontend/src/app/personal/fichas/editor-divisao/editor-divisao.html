@@ -29,7 +29,7 @@
         <div class="campos">
           <mat-form-field>
             <mat-label>Séries</mat-label>
-            <input matInput type="number" formControlName="series" min="1" max="20" />
+            <input matInput type="number" formControlName="series" min="1" max="20" step="1" />
             <mat-error>Informe o número de séries (1 a 20).</mat-error>
           </mat-form-field>
           <mat-form-field>
@@ -40,13 +40,13 @@
           </mat-form-field>
           <mat-form-field>
             <mat-label>Carga (kg)</mat-label>
-            <input matInput type="number" inputmode="decimal" step="0.5" min="0" formControlName="cargaKg" />
-            <mat-error>A carga não pode ser negativa.</mat-error>
+            <input matInput type="number" inputmode="decimal" step="0.5" min="0" max="9999.99" formControlName="cargaKg" />
+            <mat-error>Informe uma carga entre 0 e 9999,99 kg.</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Descanso (s)</mat-label>
-            <input matInput type="number" min="0" max="3600" formControlName="descansoSeg" />
-            <mat-error>Use um descanso entre 0 e 3600 segundos.</mat-error>
+            <input matInput type="number" min="0" max="3600" step="1" formControlName="descansoSeg" />
+            <mat-error>Informe o descanso em segundos (0 a 3600).</mat-error>
           </mat-form-field>
         </div>
         <mat-form-field>

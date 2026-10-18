@@ -104,6 +104,27 @@ describe('EditorDivisao', () => {
     expect(el.textContent).toContain('Use um número (ex.: 10) ou uma faixa (ex.: 8-12).');
   });
 
+  it('valores numéricos inválidos mostram as mensagens de cada campo', () => {
+    const { fixture, form, el } = montar(1);
+    const i = form.controls.itens.at(0).controls;
+    i.series.setValue(2.5);
+    i.cargaKg.setValue(1.234);
+    i.descansoSeg.setValue(30.5);
+    form.markAllAsTouched();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Informe o número de séries (1 a 20).');
+    expect(el.textContent).toContain('Informe uma carga entre 0 e 9999,99 kg.');
+    expect(el.textContent).toContain('Informe o descanso em segundos (0 a 3600).');
+  });
+
+  it('nome da divisão só com espaços mostra erro', () => {
+    const { fixture, form, el } = montar(1);
+    form.controls.nome.setValue('   ');
+    form.controls.nome.markAsTouched();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Informe o nome da divisão.');
+  });
+
   it('cargaDecimalEhEnviadaComoNumero', () => {
     const { fixture, form, el } = montar(1);
     const c = el.querySelector('[formControlName="cargaKg"]') as HTMLInputElement;
