@@ -63,6 +63,25 @@ describe('EditorDivisao', () => {
     expect(form.controls.itens.length).toBe(0);
   });
 
+  it('duplo toque em Adicionar/Trocar exercício abre um só seletor', async () => {
+    let fechar!: (e: Exercicio | null) => void;
+    escolherExercicio.mockReset();
+    escolherExercicio.mockReturnValue(new Promise((r) => (fechar = r)));
+    const { fixture, form, el } = montar(1);
+    botao(el, 'Adicionar exercício').click();
+    botao(el, 'Adicionar exercício').click();
+    botao(el, 'Trocar exercício').click();
+    expect(escolherExercicio).toHaveBeenCalledTimes(1);
+    fechar(supino);
+    await fixture.whenStable();
+    expect(form.controls.itens.length).toBe(2);
+
+    escolherExercicio.mockResolvedValue(null);
+    botao(el, 'Trocar exercício').click();
+    await fixture.whenStable();
+    expect(escolherExercicio).toHaveBeenCalledTimes(2);
+  });
+
   it('subir e descer reordenam os itens', () => {
     const { fixture, form, el } = montar(2);
     expect(botao(el, 'Subir', 0).disabled).toBe(true);

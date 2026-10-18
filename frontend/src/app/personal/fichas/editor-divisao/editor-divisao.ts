@@ -34,9 +34,11 @@ export class EditorDivisao {
   readonly descer = output<void>();
 
   protected readonly rotulo = ROTULO_GRUPO;
+  /** Seletor aberto: novos toques em Adicionar/Trocar são ignorados até ele fechar. */
+  private escolhendo = false;
 
   protected async adicionar(): Promise<void> {
-    const exercicio = await this.escolher();
+    const exercicio = await this.escolherUmaVez();
     if (!exercicio) return;
     const itens = this.form().controls.itens;
     itens.push(
@@ -50,7 +52,7 @@ export class EditorDivisao {
   }
 
   protected async trocar(item: ItemForm): Promise<void> {
-    const exercicio = await this.escolher();
+    const exercicio = await this.escolherUmaVez();
     if (!exercicio) return;
     item.patchValue({
       exercicioId: exercicio.id,
@@ -58,6 +60,16 @@ export class EditorDivisao {
       grupoMuscular: exercicio.grupoMuscular,
     });
     item.markAsDirty();
+  }
+
+  private async escolherUmaVez(): Promise<Exercicio | null> {
+    if (this.escolhendo) return null;
+    this.escolhendo = true;
+    try {
+      return await this.escolher();
+    } finally {
+      this.escolhendo = false;
+    }
   }
 
   protected mover(indice: number, delta: -1 | 1): void {
