@@ -20,6 +20,7 @@ import com.projetofit.comum.erro.ConflitoException;
 import com.projetofit.comum.erro.IntegracaoExternaException;
 import com.projetofit.comum.supabase.SupabaseAdmin;
 import com.projetofit.seguranca.TokenDeTeste;
+import com.projetofit.exercicio.ExercicioRepository;
 import com.projetofit.usuario.Papel;
 import com.projetofit.usuario.Usuario;
 import com.projetofit.usuario.UsuarioRepository;
@@ -43,8 +44,12 @@ class AlunoControllerIT extends TesteIntegracao {
     @Autowired
     AlunoRepository alunoRepository;
 
+    @Autowired
+    ExercicioRepository exercicioRepository;
+
     @BeforeEach
     void preparar() {
+        exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
         usuarioRepository.save(new Usuario(PERSONAL_ID, "personal", "personal@teste.com", Papel.PERSONAL));

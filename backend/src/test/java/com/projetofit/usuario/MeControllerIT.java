@@ -13,6 +13,7 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.projetofit.TesteIntegracao;
 import com.projetofit.aluno.Aluno;
 import com.projetofit.aluno.AlunoRepository;
+import com.projetofit.exercicio.ExercicioRepository;
 import com.projetofit.aluno.StatusAluno;
 import com.projetofit.seguranca.JwtDeTesteConfig;
 import com.projetofit.seguranca.TokenDeTeste;
@@ -33,8 +34,12 @@ class MeControllerIT extends TesteIntegracao {
     @Autowired
     AlunoRepository alunoRepository;
 
+    @Autowired
+    ExercicioRepository exercicioRepository;
+
     @BeforeEach
     void limpar() {
+        exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
     }

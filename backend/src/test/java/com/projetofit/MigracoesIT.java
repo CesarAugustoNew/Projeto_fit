@@ -25,11 +25,12 @@ class MigracoesIT extends TesteIntegracao {
                 "select count(*) from pg_policies where schemaname = 'public'", Integer.class);
         assertThat(politicas).isZero();
         assertThat(jdbc.queryForList("select tablename from pg_tables where schemaname = 'public'", String.class))
-                .contains("usuario", "aluno");
+                .contains("usuario", "aluno", "exercicio");
     }
 
     @Test
     void statusDeAlunoInvalidoEhRecusado() {
+        jdbc.update("delete from exercicio");
         jdbc.update("delete from aluno");
         jdbc.update("delete from usuario");
         jdbc.update("insert into usuario (id, nome, email, papel) values ('00000000-0000-0000-0000-000000000001', 'P', 'p@teste.com', 'PERSONAL')");
@@ -43,11 +44,42 @@ class MigracoesIT extends TesteIntegracao {
 
     @Test
     void emailEhUnicoSemDiferenciarMaiusculas() {
+        jdbc.update("delete from exercicio");
         jdbc.update("delete from aluno");
         jdbc.update("delete from usuario");
         jdbc.update("insert into usuario (id, nome, email, papel) values (gen_random_uuid(), 'A', 'Aluno@Teste.com', 'ALUNO')");
         assertThatThrownBy(() -> jdbc.update(
                 "insert into usuario (id, nome, email, papel) values (gen_random_uuid(), 'B', 'aluno@teste.com', 'ALUNO')"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        jdbc.update("delete from usuario");
+    }
+
+    @Test
+    void nomeDeExercicioEhUnicoPorPersonalSemDiferenciarMaiusculas() {
+        jdbc.update("delete from exercicio");
+        jdbc.update("delete from aluno");
+        jdbc.update("delete from usuario");
+        jdbc.update("insert into usuario (id, nome, email, papel) values ('00000000-0000-0000-0000-000000000001', 'P1', 'p1@teste.com', 'PERSONAL')");
+        jdbc.update("insert into usuario (id, nome, email, papel) values ('00000000-0000-0000-0000-000000000002', 'P2', 'p2@teste.com', 'PERSONAL')");
+        jdbc.update("insert into exercicio (personal_id, nome, grupo_muscular) values "
+                + "('00000000-0000-0000-0000-000000000001', 'Supino', 'PEITO')");
+        assertThatThrownBy(() -> jdbc.update("insert into exercicio (personal_id, nome, grupo_muscular) values "
+                + "('00000000-0000-0000-0000-000000000001', 'supino', 'PEITO')"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        jdbc.update("insert into exercicio (personal_id, nome, grupo_muscular) values "
+                + "('00000000-0000-0000-0000-000000000002', 'supino', 'PEITO')");
+        jdbc.update("delete from exercicio");
+        jdbc.update("delete from usuario");
+    }
+
+    @Test
+    void grupoMuscularInvalidoEhRecusado() {
+        jdbc.update("delete from exercicio");
+        jdbc.update("delete from aluno");
+        jdbc.update("delete from usuario");
+        jdbc.update("insert into usuario (id, nome, email, papel) values ('00000000-0000-0000-0000-000000000001', 'P', 'p@teste.com', 'PERSONAL')");
+        assertThatThrownBy(() -> jdbc.update("insert into exercicio (personal_id, nome, grupo_muscular) values "
+                + "('00000000-0000-0000-0000-000000000001', 'Pescoco', 'PESCOCO')"))
                 .isInstanceOf(DataIntegrityViolationException.class);
         jdbc.update("delete from usuario");
     }
