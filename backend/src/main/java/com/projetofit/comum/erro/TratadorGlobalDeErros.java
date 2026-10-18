@@ -1,5 +1,6 @@
 package com.projetofit.comum.erro;
 
+import com.projetofit.comum.seguranca.RespostasDeSegurancaProblem;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,6 +52,17 @@ public class TratadorGlobalDeErros extends ResponseEntityExceptionHandler {
     ProblemDetail integracaoExterna(IntegracaoExternaException ex) {
         log.warn("Falha em serviço externo", ex);
         return problema(HttpStatus.BAD_GATEWAY, "Falha em serviço externo", ex.getMessage());
+    }
+
+    /** Segurança de método ({@code @PreAuthorize}) lança dentro do controller; sem isto viraria 500. */
+    @ExceptionHandler(AccessDeniedException.class)
+    ProblemDetail acessoNegado(AccessDeniedException ex) {
+        return RespostasDeSegurancaProblem.acessoNegado();
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ProblemDetail naoAutenticado(AuthenticationException ex) {
+        return RespostasDeSegurancaProblem.naoAutenticado();
     }
 
     @ExceptionHandler(Exception.class)

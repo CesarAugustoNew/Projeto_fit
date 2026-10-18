@@ -64,4 +64,22 @@ class TratadorGlobalDeErrosTest {
                 .andExpect(jsonPath("$.detail").value("Ocorreu um erro inesperado."))
                 .andExpect(content().string(not(containsString("segredo interno"))));
     }
+
+    @Test
+    void accessDeniedExceptionRetorna403() throws Exception {
+        mvc.perform(get("/teste/acesso-negado"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Acesso negado"))
+                .andExpect(jsonPath("$.detail").value("Você não tem permissão para acessar este recurso."));
+    }
+
+    @Test
+    void authenticationExceptionRetorna401() throws Exception {
+        mvc.perform(get("/teste/nao-autenticado"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Não autenticado"))
+                .andExpect(jsonPath("$.detail").value("Token ausente, inválido ou expirado."));
+    }
 }

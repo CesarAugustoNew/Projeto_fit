@@ -1,5 +1,6 @@
 package com.projetofit;
 
+import com.projetofit.seguranca.JwtDeTesteConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -11,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, JwtDeTesteConfig.class})
 public abstract class TesteIntegracao {
 
     @Autowired
