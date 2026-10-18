@@ -333,7 +333,7 @@ describe('FormFicha', () => {
     f.detectChanges();
     expect(dialogOpen.mock.calls[0][1].data).toEqual({
       titulo: 'Remover divisão',
-      mensagem: 'A divisão "Treino A" e seus 1 exercício serão removidos.',
+      mensagem: 'A divisão "Treino A" e o exercício dela serão removidos.',
       confirmar: 'Remover',
     });
     expect(nomes(f)).toEqual(['Treino A']);

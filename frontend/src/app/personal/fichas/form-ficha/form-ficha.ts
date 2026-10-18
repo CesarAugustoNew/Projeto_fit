@@ -158,11 +158,13 @@ export class FormFicha implements OnInit {
   protected async removerDivisao(divisao: DivisaoForm): Promise<void> {
     const n = divisao.controls.itens.length;
     if (n > 0) {
+      const nome = divisao.controls.nome.value.trim();
       const ok = await confirmar(this.dialog, {
         titulo: 'Remover divisão',
-        mensagem: `A divisão "${divisao.controls.nome.value.trim()}" e seus ${
-          n === 1 ? '1 exercício' : `${n} exercícios`
-        } serão removidos.`,
+        mensagem:
+          n === 1
+            ? `A divisão "${nome}" e o exercício dela serão removidos.`
+            : `A divisão "${nome}" e seus ${n} exercícios serão removidos.`,
         confirmar: 'Remover',
       });
       if (!ok) return;
