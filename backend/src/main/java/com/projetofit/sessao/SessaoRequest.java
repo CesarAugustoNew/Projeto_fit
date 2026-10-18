@@ -17,5 +17,5 @@ public record SessaoRequest(
         @NotNull Instant iniciadaEm,
         @NotNull Instant finalizadaEm,
         @Size(max = 1000) String observacao,
-        @NotEmpty @Size(max = 200) List<@NotNull @Valid SerieRequest> series) {
+        @NotEmpty @Size(max = 400) List<@NotNull @Valid SerieRequest> series) {
 }
