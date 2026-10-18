@@ -6,7 +6,7 @@ import { Papel, Usuario, rotaInicial } from '../usuario/usuario.model';
 import { UsuarioService } from '../usuario/usuario.service';
 
 export function papelGuard(papel: Papel): CanActivateFn {
-  return async () => {
+  return async (_route, state) => {
     const auth = inject(AuthService);
     const usuarioService = inject(UsuarioService);
     const router = inject(Router);
@@ -25,8 +25,8 @@ export function papelGuard(papel: Papel): CanActivateFn {
           await auth.logout();
           return router.parseUrl('/login');
         }
-        // rede (0) ou 5xx: falha passageira, mantem a sessao; o erroInterceptor ja avisou
-        return false;
+        // rede (0) ou 5xx: falha passageira, mantem a sessao e mostra a tela de indisponivel
+        return router.createUrlTree(['/indisponivel'], { queryParams: { voltar: state.url } });
       }
     }
     return usuario.papel === papel ? true : router.parseUrl(rotaInicial(usuario.papel));

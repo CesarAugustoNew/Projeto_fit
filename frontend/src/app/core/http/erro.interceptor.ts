@@ -21,9 +21,17 @@ export const erroInterceptor: HttpInterceptorFn = (req, next) => {
           if (router.url !== '/login') {
             void router.navigateByUrl('/login');
           }
+        } else if (error.status === 403) {
+          // no /login a propria tela mostra a mensagem
+          if (router.url.split('?')[0] !== '/login') {
+            void auth.logout();
+            usuario.limpar();
+            void router.navigateByUrl('/login');
+            snackBar.open('Sua conta não tem acesso ao app.', 'Fechar', { duration: 5000 });
+          }
         } else if (error.status === 0) {
           snackBar.open('Sem conexão com o servidor.', 'Fechar', { duration: 5000 });
-        } else if (error.status !== 403) {
+        } else {
           const msg = error.error?.detail ?? error.error?.title ?? 'Erro inesperado.';
           snackBar.open(msg, 'Fechar', { duration: 5000 });
         }

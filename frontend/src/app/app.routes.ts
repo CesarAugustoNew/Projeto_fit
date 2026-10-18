@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./publico/esqueci-senha/esqueci-senha').then((m) => m.EsqueciSenha),
   },
   {
+    path: 'indisponivel',
+    loadComponent: () => import('./publico/indisponivel/indisponivel').then((m) => m.Indisponivel),
+  },
+  {
     path: 'personal',
     canActivate: [authGuard, papelGuard('PERSONAL')],
     loadChildren: () => import('./personal/personal.routes').then((m) => m.personalRoutes),

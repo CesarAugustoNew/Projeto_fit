@@ -29,7 +29,7 @@ describe('papelGuard', () => {
   });
 
   const executar = (papel: Papel) =>
-    TestBed.runInInjectionContext(() => papelGuard(papel)({} as never, {} as never));
+    TestBed.runInInjectionContext(() => papelGuard(papel)({} as never, { url: '/personal/alunos' } as never));
   const usr = (papel: Papel): Usuario => ({ id: '1', nome: 'A', email: 'a@b.com', papel });
 
   it('papel igual permite', async () => {
@@ -71,15 +71,19 @@ describe('papelGuard', () => {
     expect(TestBed.inject(Router).serializeUrl(r as never)).toBe('/login');
   });
 
-  it('/me com 500 não desloga e bloqueia a navegação', async () => {
+  it('/me com 500 vai para /indisponivel com voltar, sem deslogar', async () => {
     usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
-    expect(await executar('PERSONAL')).toBe(false);
+    const r = await executar('PERSONAL');
+    expect(TestBed.inject(Router).serializeUrl(r as never)).toBe(
+      '/indisponivel?voltar=%2Fpersonal%2Falunos',
+    );
     expect(auth.logout).not.toHaveBeenCalled();
   });
 
-  it('/me sem conexão (status 0) não desloga e bloqueia a navegação', async () => {
+  it('/me sem conexão (status 0) vai para /indisponivel', async () => {
     usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
-    expect(await executar('PERSONAL')).toBe(false);
+    const r = await executar('PERSONAL');
+    expect(TestBed.inject(Router).serializeUrl(r as never)).toContain('/indisponivel');
     expect(auth.logout).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,19 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.cartao {
+  width: 100%;
+  max-width: 400px;
+}
+
+.acoes {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}

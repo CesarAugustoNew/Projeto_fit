@@ -66,8 +66,19 @@ describe('erroInterceptor', () => {
     expect(snack.open).toHaveBeenCalledWith('Sem conexão com o servidor.', 'Fechar', { duration: 5000 });
   });
 
-  it('403 não mostra snackbar', () => {
+  it('403 fora do login desloga, limpa, vai ao login e avisa', () => {
     falhar({}, { status: 403, statusText: 'Forbidden' });
+    expect(auth.logout).toHaveBeenCalledTimes(1);
+    expect(usuario.limpar).toHaveBeenCalledTimes(1);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+    expect(snack.open).toHaveBeenCalledWith('Sua conta não tem acesso ao app.', 'Fechar', { duration: 5000 });
+  });
+
+  it('403 no /login não desloga nem navega', () => {
+    router.url = '/login?x=1';
+    falhar({}, { status: 403, statusText: 'Forbidden' });
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
     expect(snack.open).not.toHaveBeenCalled();
   });
 
