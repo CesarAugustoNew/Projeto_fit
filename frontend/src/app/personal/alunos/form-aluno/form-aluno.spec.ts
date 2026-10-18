@@ -93,6 +93,25 @@ describe('FormAluno', () => {
     expect(el(f).textContent).toContain('Informe um e-mail válido.');
   });
 
+  it('dataFuturaMostraErroENaoEnvia', async () => {
+    const local = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hoje = new Date();
+    const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 1);
+    const f = await montar();
+    expect(campo(f, 'dataNascimento').getAttribute('max')).toBe(local(ontem));
+    digitar(f, 'nome', 'Ana');
+    digitar(f, 'email', 'ana@x.com');
+    digitar(f, 'dataNascimento', local(hoje));
+    campo(f, 'dataNascimento').dispatchEvent(new Event('blur'));
+    enviar(f);
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+    expect(criar).not.toHaveBeenCalled();
+    expect(el(f).textContent).toContain('Informe uma data no passado.');
+  });
+
   it('naoEnviaDuasVezesEnquantoSalva', async () => {
     const f = await montar();
     criar.mockReturnValue(new Promise(() => {}));

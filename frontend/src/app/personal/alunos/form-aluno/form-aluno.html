@@ -22,7 +22,8 @@
     </mat-form-field>
     <mat-form-field>
       <mat-label>Data de nascimento</mat-label>
-      <input matInput type="date" formControlName="dataNascimento" />
+      <input matInput type="date" formControlName="dataNascimento" [max]="ontem" />
+      <mat-error>Informe uma data no passado.</mat-error>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Objetivo</mat-label>

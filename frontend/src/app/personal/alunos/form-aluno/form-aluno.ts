@@ -1,5 +1,11 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,11 +31,13 @@ export class FormAluno implements OnInit {
     nome: ['', [Validators.required, Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email]],
     telefone: ['', Validators.maxLength(20)],
-    dataNascimento: [''],
+    dataNascimento: ['', dataNoPassado],
     objetivo: ['', Validators.maxLength(500)],
     observacoes: ['', Validators.maxLength(2000)],
   });
   protected readonly enviando = signal(false);
+  /** Data maxima do seletor: ontem, no fuso local. */
+  protected readonly ontem = ontemLocal();
 
   protected get editando(): boolean {
     return !!this.id();
@@ -102,4 +110,22 @@ export class FormAluno implements OnInit {
 function vazioParaNull(valor: string): string | null {
   const v = valor.trim();
   return v === '' ? null : v;
+}
+
+/** `yyyy-MM-dd` no fuso local (`toISOString()` usaria UTC e erraria o dia a noite). */
+function dataLocal(d: Date): string {
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
+function ontemLocal(): string {
+  const hoje = new Date();
+  return dataLocal(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 1));
+}
+
+/** Rejeita hoje ou datas futuras; vazio e valido (campo opcional). */
+function dataNoPassado(control: AbstractControl<string>): ValidationErrors | null {
+  const v = control.value;
+  return v && v >= dataLocal(new Date()) ? { dataNoPassado: true } : null;
 }
