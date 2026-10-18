@@ -1,0 +1,50 @@
+.form-ficha {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+
+  h1 {
+    margin: 0 0 16px;
+    font-size: 1.5rem;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.datas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+
+  @media (min-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+.divisoes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.adicionar {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.erro-geral {
+  margin: 8px 0 0;
+  color: var(--mat-sys-error, #b3261e);
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

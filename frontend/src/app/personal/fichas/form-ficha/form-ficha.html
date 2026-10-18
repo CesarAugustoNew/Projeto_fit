@@ -1,0 +1,59 @@
+<div class="form-ficha">
+  <h1>{{ editando ? 'Editar ficha' : 'Nova ficha' }}</h1>
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <mat-form-field>
+      <mat-label>Nome da ficha</mat-label>
+      <input matInput formControlName="nome" maxlength="120" />
+      <mat-error>Informe o nome da ficha.</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Objetivo</mat-label>
+      <textarea matInput formControlName="objetivo" rows="2" maxlength="500"></textarea>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Frequência semanal</mat-label>
+      <mat-select formControlName="frequenciaSemanal">
+        @for (n of frequencias; track n) {
+          <mat-option [value]="n">{{ n }}x por semana</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="datas">
+      <mat-form-field>
+        <mat-label>Data de início</mat-label>
+        <input matInput type="date" formControlName="dataInicio" />
+        <mat-error>Informe a data de início.</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Data de fim</mat-label>
+        <input matInput type="date" formControlName="dataFim" />
+        <mat-error>A data de fim deve ser igual ou posterior à data de início.</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="divisoes">
+      @for (d of divisoes.controls; track d; let i = $index) {
+        <app-editor-divisao
+          [form]="d"
+          [posicao]="i"
+          (remover)="removerDivisao(i)"
+          (subir)="moverDivisao(i, -1)"
+          (descer)="moverDivisao(i, 1)"
+        />
+      }
+    </div>
+    @if (divisoes.length < maxDivisoes) {
+      <button mat-stroked-button type="button" class="adicionar" (click)="adicionarDivisao()">
+        Adicionar divisão
+      </button>
+    }
+
+    @if (tentouEnviar() && form.invalid) {
+      <p class="erro-geral" role="alert">Revise os campos destacados.</p>
+    }
+    <div class="acoes">
+      <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+      <button mat-flat-button type="submit" [disabled]="enviando() || carregando()">Salvar</button>
+    </div>
+  </form>
+</div>
