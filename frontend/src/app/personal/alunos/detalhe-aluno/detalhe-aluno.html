@@ -1,0 +1,56 @@
+<section class="detalhe-aluno">
+  <a class="voltar" mat-button routerLink="/personal/alunos">Voltar</a>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando...</p>
+  } @else if (aluno(); as a) {
+    <h1>{{ a.nome }}</h1>
+
+    <dl class="dados">
+      <div data-campo="email">
+        <dt>E-mail</dt>
+        <dd>{{ a.email }}</dd>
+      </div>
+      <div data-campo="status">
+        <dt>Status</dt>
+        <dd>{{ rotulos[a.status] }}</dd>
+      </div>
+      <div data-campo="telefone">
+        <dt>Telefone</dt>
+        <dd>{{ a.telefone || '—' }}</dd>
+      </div>
+      <div data-campo="dataNascimento">
+        <dt>Data de nascimento</dt>
+        <dd>{{ formatarData(a.dataNascimento) }}</dd>
+      </div>
+      <div data-campo="objetivo">
+        <dt>Objetivo</dt>
+        <dd>{{ a.objetivo || '—' }}</dd>
+      </div>
+      <div data-campo="observacoes">
+        <dt>Observações</dt>
+        <dd>{{ a.observacoes || '—' }}</dd>
+      </div>
+    </dl>
+
+    <div class="acoes">
+      <a mat-stroked-button [routerLink]="['/personal/alunos', a.id, 'editar']">Editar</a>
+      @if (a.status === 'CONVIDADO') {
+        <button mat-stroked-button type="button" [disabled]="enviando()" (click)="reenviarConvite()">
+          Reenviar convite
+        </button>
+      }
+      @if (a.status === 'INATIVO') {
+        <button mat-flat-button type="button" [disabled]="enviando()" (click)="reativar()">
+          Reativar
+        </button>
+      } @else {
+        <button mat-stroked-button type="button" [disabled]="enviando()" (click)="desativar(a)">
+          Desativar
+        </button>
+      }
+    </div>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar o aluno.</p>
+  }
+</section>
