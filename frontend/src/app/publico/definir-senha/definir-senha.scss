@@ -1,0 +1,35 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.cartao {
+  width: 100%;
+  max-width: 400px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.erro {
+  color: var(--mat-sys-error);
+  margin: 0;
+}
+
+.sucesso {
+  margin: 0;
+}
+
+.links {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
