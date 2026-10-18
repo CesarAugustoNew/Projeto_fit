@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.projetofit.TesteIntegracao;
+import com.projetofit.aluno.AlunoRepository;
 import com.projetofit.seguranca.JwtDeTesteConfig;
 import com.projetofit.seguranca.TokenDeTeste;
 import jakarta.servlet.DispatcherType;
@@ -27,8 +28,12 @@ class MeControllerIT extends TesteIntegracao {
     @Autowired
     UsuarioRepository usuarioRepository;
 
+    @Autowired
+    AlunoRepository alunoRepository;
+
     @BeforeEach
     void limpar() {
+        alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
     }
 

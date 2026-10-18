@@ -77,6 +77,10 @@ public class Usuario implements Persistable<UUID> {
         return novo;
     }
 
+    public void alterarNome(String nome) {
+        this.nome = nome;
+    }
+
     public String getNome() {
         return nome;
     }
