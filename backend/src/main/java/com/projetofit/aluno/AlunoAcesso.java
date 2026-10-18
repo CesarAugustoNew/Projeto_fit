@@ -25,7 +25,7 @@ public class AlunoAcesso {
                     case INATIVO -> false;
                     case ATIVO -> true;
                     case CONVIDADO -> {
-                        aluno.alterarStatus(StatusAluno.ATIVO);
+                        aluno.registrarPrimeiroAcesso();
                         yield true;
                     }
                 })

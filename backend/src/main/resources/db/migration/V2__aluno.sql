@@ -7,6 +7,7 @@ create table aluno (
     objetivo        text,
     observacoes     text,
     status          text not null check (status in ('CONVIDADO', 'ATIVO', 'INATIVO')),
+    primeiro_acesso_em timestamptz,
     criado_em       timestamptz not null default now(),
     atualizado_em   timestamptz not null default now()
 );

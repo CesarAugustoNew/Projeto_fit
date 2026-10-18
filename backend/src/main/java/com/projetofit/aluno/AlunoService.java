@@ -97,7 +97,8 @@ public class AlunoService {
 
     /**
      * {@code INATIVO} a partir de qualquer status; {@code ATIVO} só a partir de {@code INATIVO} ou {@code ATIVO}
-     * (quem passa de {@code CONVIDADO} para {@code ATIVO} é o próprio aluno, no primeiro acesso).
+     * (quem passa de {@code CONVIDADO} para {@code ATIVO} é o próprio aluno, no primeiro acesso). Reativar um aluno
+     * que nunca entrou o devolve a {@code CONVIDADO}, para que o convite possa ser reenviado.
      */
     @Transactional
     public AlunoDTO alterarStatus(UUID id, StatusAluno novo) {
@@ -108,7 +109,11 @@ public class AlunoService {
         if (novo == StatusAluno.ATIVO && aluno.getStatus() == StatusAluno.CONVIDADO) {
             throw new ConflitoException("O aluno ainda não aceitou o convite.");
         }
-        aluno.alterarStatus(novo);
+        if (novo == StatusAluno.ATIVO && aluno.getPrimeiroAcessoEm() == null) {
+            aluno.alterarStatus(StatusAluno.CONVIDADO);
+        } else {
+            aluno.alterarStatus(novo);
+        }
         return AlunoDTO.de(aluno);
     }
 

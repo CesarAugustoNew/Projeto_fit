@@ -40,7 +40,19 @@ class AcessoAlunoIT extends TesteIntegracao {
         mvc.perform(get("/api/me").header("Authorization", bearerAluno(alunoUsuarioId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.papel").value("ALUNO"));
-        assertThat(alunoRepository.findById(aluno.getId()).orElseThrow().getStatus()).isEqualTo(StatusAluno.ATIVO);
+        Aluno atualizado = alunoRepository.findById(aluno.getId()).orElseThrow();
+        assertThat(atualizado.getStatus()).isEqualTo(StatusAluno.ATIVO);
+        assertThat(atualizado.getPrimeiroAcessoEm()).isNotNull();
+    }
+
+    @Test
+    void usuarioAlunoSemCadastroDeAlunoRecebe403() throws Exception {
+        UUID alunoUsuarioId = UUID.randomUUID();
+        usuarioRepository.save(new Usuario(alunoUsuarioId, "Ana", "ana@teste.com", Papel.ALUNO));
+
+        mvc.perform(get("/api/me").header("Authorization", bearerAluno(alunoUsuarioId)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.title").value("Acesso negado"));
     }
 
     @Test

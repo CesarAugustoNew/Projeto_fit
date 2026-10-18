@@ -171,7 +171,10 @@ class AlunoControllerIT extends TesteIntegracao {
 
     @Test
     void desativarEReativar() throws Exception {
-        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.ATIVO, PERSONAL_ID);
+        Usuario usuario = usuarioRepository.save(new Usuario(UUID.randomUUID(), "Ana", "ana@teste.com", Papel.ALUNO));
+        Aluno aluno = new Aluno(usuario, PERSONAL_ID, null, null, null, null);
+        aluno.registrarPrimeiroAcesso();
+        aluno = alunoRepository.save(aluno);
 
         alterarStatus(aluno.getId(), "INATIVO")
                 .andExpect(status().isOk())
@@ -180,6 +183,21 @@ class AlunoControllerIT extends TesteIntegracao {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ATIVO"));
         assertThat(alunoRepository.findById(aluno.getId()).orElseThrow().getStatus()).isEqualTo(StatusAluno.ATIVO);
+    }
+
+    @Test
+    void reativarQuemNuncaEntrouVoltaParaConvidado() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
+
+        alterarStatus(aluno.getId(), "INATIVO")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("INATIVO"));
+        alterarStatus(aluno.getId(), "ATIVO")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CONVIDADO"));
+        mvc.perform(post("/api/alunos/{id}/reenviar-convite", aluno.getId()).header("Authorization", bearerPersonal()))
+                .andExpect(status().isNoContent());
+        verify(supabaseAdmin).convidar("ana@teste.com", "Ana");
     }
 
     @Test

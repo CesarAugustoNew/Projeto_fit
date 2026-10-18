@@ -45,6 +45,9 @@ public class Aluno {
     @Column(nullable = false)
     private StatusAluno status;
 
+    @Column(name = "primeiro_acesso_em")
+    private Instant primeiroAcessoEm;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private Instant criadoEm;
 
@@ -83,6 +86,12 @@ public class Aluno {
         this.status = status;
     }
 
+    /** Primeiro acesso do aluno (convite aceito): passa a {@link StatusAluno#ATIVO} e registra o momento. */
+    public void registrarPrimeiroAcesso() {
+        this.status = StatusAluno.ATIVO;
+        this.primeiroAcessoEm = Instant.now();
+    }
+
     public UUID getId() {
         return id;
     }
@@ -113,6 +122,10 @@ public class Aluno {
 
     public StatusAluno getStatus() {
         return status;
+    }
+
+    public Instant getPrimeiroAcessoEm() {
+        return primeiroAcessoEm;
     }
 
     public Instant getCriadoEm() {
