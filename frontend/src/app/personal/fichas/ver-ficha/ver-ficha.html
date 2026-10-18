@@ -1,0 +1,81 @@
+<section class="ver-ficha">
+  @if (carregando()) {
+    <p class="mensagem">Carregando...</p>
+  } @else if (ficha(); as f) {
+    <a class="voltar" mat-button [routerLink]="['/personal/alunos', f.alunoId]">Voltar ao aluno</a>
+
+    <h1>{{ f.nome }}</h1>
+    <div class="etiquetas">
+      <span class="etiqueta" [class.encerrada]="f.status === 'ENCERRADA'">
+        @if (f.status === 'ATIVA') {
+          Ativa
+        } @else if (f.encerradaEm) {
+          Encerrada em {{ formatarData(f.encerradaEm) }}
+        } @else {
+          Encerrada
+        }
+      </span>
+      @if (f.vencida) {
+        <span class="etiqueta vencida">Vencida</span>
+      }
+    </div>
+
+    <dl class="dados">
+      @if (f.objetivo) {
+        <div data-campo="objetivo">
+          <dt>Objetivo</dt>
+          <dd>{{ f.objetivo }}</dd>
+        </div>
+      }
+      <div data-campo="inicio">
+        <dt>Início</dt>
+        <dd>{{ formatarData(f.dataInicio) }}</dd>
+      </div>
+      <div data-campo="fim">
+        <dt>Fim</dt>
+        <dd>{{ formatarData(f.dataFim) }}</dd>
+      </div>
+      <div data-campo="frequencia">
+        <dt>Frequência</dt>
+        <dd>{{ f.frequenciaSemanal }}x por semana</dd>
+      </div>
+    </dl>
+
+    @if (f.status === 'ATIVA') {
+      <div class="acoes">
+        <a mat-stroked-button [routerLink]="['/personal/fichas', f.id, 'editar']">Editar</a>
+        <button mat-stroked-button type="button" [disabled]="enviando()" (click)="encerrar(f)">
+          Encerrar
+        </button>
+      </div>
+    }
+
+    @for (d of f.divisoes; track d.id) {
+      <section class="divisao">
+        <h2>{{ d.nome }}</h2>
+        <ol class="itens">
+          @for (i of d.itens; track i.id) {
+            <li class="item">
+              <strong class="exercicio">{{ i.exercicioNome }}</strong>
+              <span class="detalhes">
+                <span>{{ i.series }} x {{ i.repeticoes }}</span>
+                @if (i.cargaKg !== null) {
+                  <span>{{ formatarCarga(i.cargaKg) }}</span>
+                }
+                @if (i.descansoSeg !== null) {
+                  <span>{{ i.descansoSeg }} s</span>
+                }
+              </span>
+              @if (i.observacao) {
+                <span class="observacao">{{ i.observacao }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  } @else if (erro()) {
+    <a class="voltar" mat-button routerLink="/personal/alunos">Voltar</a>
+    <p class="mensagem" role="alert">Não foi possível carregar a ficha.</p>
+  }
+</section>

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { ItemNav } from '../layout/item-nav';
 import { Shell } from '../layout/shell';
 import { Dashboard } from './dashboard/dashboard';
+import { descartarAlteracoesGuard } from './fichas/form-ficha/descartar-alteracoes.guard';
 
 const itens: ItemNav[] = [
   { rota: '/personal/dashboard', rotulo: 'Dashboard', icone: 'dashboard' },
@@ -33,6 +34,20 @@ export const personalRoutes: Routes = [
       {
         path: 'alunos/:id/editar',
         loadComponent: () => import('./alunos/form-aluno/form-aluno').then((m) => m.FormAluno),
+      },
+      {
+        path: 'alunos/:alunoId/fichas/nova',
+        loadComponent: () => import('./fichas/form-ficha/form-ficha').then((m) => m.FormFicha),
+        canDeactivate: [descartarAlteracoesGuard],
+      },
+      {
+        path: 'fichas/:id',
+        loadComponent: () => import('./fichas/ver-ficha/ver-ficha').then((m) => m.VerFicha),
+      },
+      {
+        path: 'fichas/:id/editar',
+        loadComponent: () => import('./fichas/form-ficha/form-ficha').then((m) => m.FormFicha),
+        canDeactivate: [descartarAlteracoesGuard],
       },
       {
         path: 'exercicios',

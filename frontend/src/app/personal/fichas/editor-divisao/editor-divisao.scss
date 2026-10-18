@@ -1,0 +1,82 @@
+:host {
+  display: block;
+}
+
+.divisao {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  .nome {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.acoes-divisao {
+  display: flex;
+  padding-top: 4px;
+}
+
+.itens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--mat-sys-outline-variant, #cac4d0);
+  border-radius: 12px;
+}
+
+.exercicio {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+
+  .grupo {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant, #49454f);
+  }
+}
+
+.campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+}
+
+.acoes-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  button {
+    min-height: 44px;
+    flex: 1 1 140px;
+  }
+}
+
+.erro {
+  margin: 0;
+  color: var(--mat-sys-error, #b3261e);
+  font-size: 0.875rem;
+}
+
+.adicionar {
+  min-height: 48px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1rem;
+}

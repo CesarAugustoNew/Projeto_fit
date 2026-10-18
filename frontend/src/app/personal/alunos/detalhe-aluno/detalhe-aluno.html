@@ -50,6 +50,8 @@
         </button>
       }
     </div>
+
+    <app-fichas-do-aluno [alunoId]="a.id" [alunoAtivo]="a.status !== 'INATIVO'" />
   } @else if (erro()) {
     <p class="mensagem" role="alert">Não foi possível carregar o aluno.</p>
   }

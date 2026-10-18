@@ -47,6 +47,11 @@ class ControllerDeTeste {
         throw new ConflitoException("E-mail já cadastrado");
     }
 
+    @GetMapping("/dados-invalidos")
+    void dadosInvalidos() {
+        throw new DadosInvalidosException("dataFim", "A data de fim deve ser igual ou posterior à data de início.");
+    }
+
     @GetMapping("/externo")
     void externo() {
         throw new IntegracaoExternaException("Supabase indisponível", new RuntimeException("timeout"));

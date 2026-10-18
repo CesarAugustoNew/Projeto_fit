@@ -1,0 +1,55 @@
+<section class="fichas">
+  <header class="cabecalho">
+    <h2>Fichas</h2>
+    @if (alunoAtivo()) {
+      <a mat-flat-button [routerLink]="['/personal/alunos', alunoId(), 'fichas', 'nova']">Nova ficha</a>
+    }
+  </header>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar as fichas.</p>
+  } @else {
+    @if (ativa(); as f) {
+      <article class="card">
+        <div class="titulo">
+          <span class="nome">{{ f.nome }}</span>
+          @if (f.vencida) {
+            <span class="etiqueta">Vencida</span>
+          }
+        </div>
+        <p class="info">
+          Início {{ formatarData(f.dataInicio) }}
+          @if (f.dataFim) {
+            · Fim {{ formatarData(f.dataFim) }}
+          }
+        </p>
+        <p class="info">{{ f.frequenciaSemanal }}x por semana · {{ rotuloDivisoes(f.quantidadeDivisoes) }}</p>
+        <div class="acoes">
+          <a mat-stroked-button [routerLink]="['/personal/fichas', f.id]">Ver</a>
+          <a mat-stroked-button [routerLink]="['/personal/fichas', f.id, 'editar']">Editar</a>
+        </div>
+      </article>
+    } @else {
+      <p class="mensagem">Nenhuma ficha ativa.</p>
+    }
+
+    @if (anteriores().length > 0) {
+      <h3>Fichas anteriores</h3>
+      <ul class="itens">
+        @for (f of anteriores(); track f.id) {
+          <li>
+            <a class="item" [routerLink]="['/personal/fichas', f.id]">
+              <span class="nome">{{ f.nome }}</span>
+              <span class="info">{{ formatarData(f.dataInicio) }} a {{ formatarData(f.dataFim) }}</span>
+              @if (f.encerradaEm) {
+                <span class="info">Encerrada em {{ formatarData(f.encerradaEm) }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

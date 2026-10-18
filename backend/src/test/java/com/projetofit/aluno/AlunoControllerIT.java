@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.projetofit.TesteIntegracao;
+import com.projetofit.ficha.FichaRepository;
 import com.projetofit.comum.erro.ConflitoException;
 import com.projetofit.comum.erro.IntegracaoExternaException;
 import com.projetofit.comum.supabase.SupabaseAdmin;
@@ -47,8 +48,12 @@ class AlunoControllerIT extends TesteIntegracao {
     @Autowired
     ExercicioRepository exercicioRepository;
 
+    @Autowired
+    FichaRepository fichaRepository;
+
     @BeforeEach
     void preparar() {
+        fichaRepository.deleteAll();
         exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
