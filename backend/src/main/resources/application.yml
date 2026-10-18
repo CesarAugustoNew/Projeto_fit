@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: projetofit
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  mvc:
+    problemdetails:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  supabase-url: ${SUPABASE_URL}
+  personal-email: ${APP_PERSONAL_EMAIL}
+  front-url: ${APP_FRONT_URL:http://localhost:4200}
