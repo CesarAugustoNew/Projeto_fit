@@ -3,7 +3,10 @@ import { ItemNav } from '../layout/item-nav';
 import { Shell } from '../layout/shell';
 import { Treino } from './treino/treino';
 
-const itens: ItemNav[] = [{ rota: '/aluno/treino', rotulo: 'Treino', icone: 'fitness_center' }];
+const itens: ItemNav[] = [
+  { rota: '/aluno/treino', rotulo: 'Treino', icone: 'fitness_center' },
+  { rota: '/aluno/historico', rotulo: 'Histórico', icone: 'history' },
+];
 
 export const alunoRoutes: Routes = [
   {

@@ -1,0 +1,68 @@
+<section class="treino">
+  @if (local.emAndamento(); as andamento) {
+    <article class="card destaque">
+      <span class="nome">Treino em andamento: {{ andamento.divisaoNome }}</span>
+      <div class="acoes">
+        <button mat-flat-button type="button" (click)="continuar()">Continuar</button>
+        <button mat-stroked-button type="button" (click)="descartar()">Descartar</button>
+      </div>
+    </article>
+  }
+
+  @if (local.pendentes() > 0) {
+    <article class="card aviso">
+      <span>{{ rotuloPendentes(local.pendentes()) }}</span>
+      <div class="acoes">
+        <button mat-stroked-button type="button" (click)="local.enviarPendentes()">Enviar agora</button>
+      </div>
+    </article>
+  }
+
+  @for (e of local.comErro(); track $index; let i = $index) {
+    <article class="card erro" role="alert">
+      <span>Um treino não pôde ser enviado: {{ e.mensagem }}</span>
+      <div class="acoes">
+        <button mat-stroked-button type="button" (click)="local.descartarComErro(i)">Descartar</button>
+      </div>
+    </article>
+  }
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar seu treino.</p>
+  } @else if (ativa(); as a) {
+    <h2>{{ a.ficha.nome }}</h2>
+    <div class="divisoes" role="radiogroup" aria-label="Divisão do treino">
+      @for (d of a.ficha.divisoes; track d.id) {
+        <label class="divisao" [class.escolhida]="d.id === divisaoEscolhidaId()">
+          <input
+            type="radio"
+            name="divisao"
+            [value]="d.id"
+            [checked]="d.id === divisaoEscolhidaId()"
+            (change)="escolher(d.id)"
+          />
+          <span class="texto">
+            <span class="nome">{{ d.nome }}</span>
+            <span class="info">{{ rotuloExercicios(d.itens.length) }}</span>
+          </span>
+          @if (d.id === a.proximaDivisaoId) {
+            <span class="etiqueta">Sugerido</span>
+          }
+        </label>
+      }
+    </div>
+    <button
+      mat-flat-button
+      class="comecar"
+      type="button"
+      [disabled]="local.emAndamento() !== null"
+      (click)="comecar()"
+    >
+      Começar treino
+    </button>
+  } @else {
+    <p class="mensagem">Você ainda não tem uma ficha ativa. Fale com seu personal.</p>
+  }
+</section>
