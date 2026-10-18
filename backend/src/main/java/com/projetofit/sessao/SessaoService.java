@@ -1,13 +1,17 @@
 package com.projetofit.sessao;
 
 import com.projetofit.aluno.Aluno;
+import com.projetofit.aluno.AlunoRepository;
 import com.projetofit.comum.erro.ConflitoException;
 import com.projetofit.comum.erro.DadosInvalidosException;
+import com.projetofit.comum.erro.RecursoNaoEncontradoException;
 import com.projetofit.exercicio.Exercicio;
 import com.projetofit.exercicio.ExercicioRepository;
 import com.projetofit.ficha.Divisao;
 import com.projetofit.ficha.DivisaoRepository;
 import com.projetofit.ficha.ItemDivisao;
+import com.projetofit.usuario.Papel;
+import com.projetofit.usuario.UsuarioAtual;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,8 +25,11 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** Sessões de treino do aluno autenticado. */
@@ -41,17 +48,22 @@ public class SessaoService {
     private final DivisaoRepository divisaoRepository;
     private final ExercicioRepository exercicioRepository;
     private final Clock clock;
+    private final UsuarioAtual usuarioAtual;
+    private final AlunoRepository alunoRepository;
     private final TransactionTemplate escrita;
     private final TransactionTemplate leitura;
 
     public SessaoService(AlunoLogado alunoLogado, SessaoRepository sessaoRepository,
                          DivisaoRepository divisaoRepository, ExercicioRepository exercicioRepository, Clock clock,
-                         PlatformTransactionManager transactionManager) {
+                         PlatformTransactionManager transactionManager, UsuarioAtual usuarioAtual,
+                         AlunoRepository alunoRepository) {
         this.alunoLogado = alunoLogado;
         this.sessaoRepository = sessaoRepository;
         this.divisaoRepository = divisaoRepository;
         this.exercicioRepository = exercicioRepository;
         this.clock = clock;
+        this.usuarioAtual = usuarioAtual;
+        this.alunoRepository = alunoRepository;
         this.escrita = new TransactionTemplate(transactionManager);
         this.leitura = new TransactionTemplate(transactionManager);
         this.leitura.setReadOnly(true);
@@ -67,12 +79,41 @@ public class SessaoService {
         try {
             return escrita.execute(status -> gravar(req));
         } catch (DataIntegrityViolationException e) {
-            log.warn("Violação de integridade ao gravar a sessão {}; relendo pelo clientId", req.clientId(), e);
+            log.warn("Violação de integridade ao gravar a sessão {}; relendo pelo clientId", req.clientId());
+            log.debug("Detalhe da violação de integridade", e);
             return leitura.execute(status -> {
                 Sessao existente = sessaoRepository.findByClientId(req.clientId()).orElseThrow(() -> e);
                 return jaRegistrada(existente, alunoLogado.obter());
             });
         }
+    }
+
+    /** Histórico do aluno logado, da sessão mais recente para a mais antiga. */
+    @Transactional(readOnly = true)
+    public Page<SessaoResumoDTO> minhas(Pageable pageable) {
+        return resumos(alunoLogado.obter().getId(), pageable);
+    }
+
+    /** Histórico de um aluno do personal logado. */
+    @Transactional(readOnly = true)
+    public Page<SessaoResumoDTO> doAluno(UUID alunoId, Pageable pageable) {
+        Aluno aluno = alunoRepository.findByIdAndPersonalId(alunoId, usuarioAtual.id())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Aluno não encontrado."));
+        return resumos(aluno.getId(), pageable);
+    }
+
+    /** Detalhe: o aluno só vê a própria sessão; o personal, só as de seus alunos. */
+    @Transactional(readOnly = true)
+    public SessaoDTO buscar(UUID id) {
+        Optional<Sessao> sessao = usuarioAtual.papel() == Papel.ALUNO
+                ? sessaoRepository.findByIdAndAlunoId(id, alunoLogado.obter().getId())
+                : sessaoRepository.findByIdAndAlunoPersonalId(id, usuarioAtual.id());
+        return SessaoDTO.de(sessao.orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada.")));
+    }
+
+    /** As séries de cada sessão são carregadas por página (N+1), aceitável com páginas de até 50. */
+    private Page<SessaoResumoDTO> resumos(UUID alunoId, Pageable pageable) {
+        return sessaoRepository.findByAlunoIdOrderByFinalizadaEmDesc(alunoId, pageable).map(SessaoResumoDTO::de);
     }
 
     private Resultado gravar(SessaoRequest req) {
