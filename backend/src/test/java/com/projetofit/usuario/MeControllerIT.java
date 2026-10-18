@@ -13,6 +13,8 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.projetofit.TesteIntegracao;
 import com.projetofit.seguranca.JwtDeTesteConfig;
 import com.projetofit.seguranca.TokenDeTeste;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -186,6 +188,19 @@ class MeControllerIT extends TesteIntegracao {
         mvc.perform(get("/teste/erro")
                         .header("Authorization", "Bearer " + TokenDeTeste.gerar(UUID.randomUUID(), "personal@teste.com")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void dispatchDeErroDoContainerNaoViraNaoAutenticado() throws Exception {
+        // Simula o forward do Tomcat para /error após uma exceção que escapou da cadeia de filtros
+        // (ex.: banco fora do ar durante a conversão do JWT): a resposta deve continuar 500, não 401/403.
+        mvc.perform(get("/error").with(requisicao -> {
+                    requisicao.setDispatcherType(DispatcherType.ERROR);
+                    requisicao.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, 500);
+                    requisicao.setAttribute(RequestDispatcher.ERROR_REQUEST_URI, "/api/me");
+                    return requisicao;
+                }))
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.projetofit.comum.seguranca;
 
 import com.projetofit.comum.AppProperties;
+import jakarta.servlet.DispatcherType;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +39,9 @@ public class SegurancaConfig {
                 .authorizeHttpRequests(rotas -> rotas
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/**").hasAnyRole("PERSONAL", "ALUNO")
+                        // Forward do container para /error (exceção que escapou dos filtros, ex.: banco fora do ar
+                        // durante a conversão do JWT): deixa sair o 5xx original em vez de virar 401/403.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(recurso -> recurso
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(conversor))
