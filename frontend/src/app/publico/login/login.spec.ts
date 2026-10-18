@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -7,7 +8,7 @@ import { Login } from './login';
 describe('Login', () => {
   let fixture: ComponentFixture<Login>;
   let el: HTMLElement;
-  const auth = { login: vi.fn(), estaLogado: vi.fn() };
+  const auth = { login: vi.fn(), estaLogado: vi.fn(), logout: vi.fn() };
   const usuario = { carregar: vi.fn() };
   let router: Router;
 
@@ -33,6 +34,7 @@ describe('Login', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     auth.estaLogado.mockResolvedValue(false);
+    auth.logout.mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -71,6 +73,39 @@ describe('Login', () => {
     fixture.detectChanges();
     expect(el.textContent).toContain('E-mail ou senha inválidos.');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  async function entrarComFalhaNoMe(status: number) {
+    auth.login.mockResolvedValue(undefined);
+    usuario.carregar.mockRejectedValue(new HttpErrorResponse({ status }));
+    await criar();
+    preencher('personal@teste.com', '12345678');
+    botao().click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('/me com 403 desloga e avisa que a conta não tem acesso', async () => {
+    await entrarComFalhaNoMe(403);
+    expect(auth.logout).toHaveBeenCalled();
+    expect(el.textContent).toContain('Sua conta não tem acesso ao app.');
+    expect(el.textContent).not.toContain('E-mail ou senha inválidos.');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('/me com 500 desloga e pede para tentar de novo', async () => {
+    await entrarComFalhaNoMe(500);
+    expect(auth.logout).toHaveBeenCalled();
+    expect(el.textContent).toContain('Não foi possível entrar. Tente novamente.');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('/me sem conexão (status 0) desloga e pede para tentar de novo', async () => {
+    await entrarComFalhaNoMe(0);
+    expect(auth.logout).toHaveBeenCalled();
+    expect(el.textContent).toContain('Não foi possível entrar. Tente novamente.');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('com sessão ativa ao abrir, redireciona direto', async () => {
@@ -78,5 +113,14 @@ describe('Login', () => {
     usuario.carregar.mockResolvedValue({ papel: 'ALUNO' });
     await criar();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/aluno/treino');
+  });
+
+  it('com sessão ativa ao abrir e /me falhando, permanece no login sem quebrar', async () => {
+    auth.estaLogado.mockResolvedValue(true);
+    usuario.carregar.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+    await criar();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(el.querySelector('form')).not.toBeNull();
+    expect(el.querySelector('.erro')).toBeNull();
   });
 });

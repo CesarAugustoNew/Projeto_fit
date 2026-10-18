@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,7 +32,7 @@ export class Login implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     senha: ['', Validators.required],
   });
-  protected readonly erro = signal(false);
+  protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
 
   async ngOnInit(): Promise<void> {
@@ -49,13 +50,26 @@ export class Login implements OnInit {
       return;
     }
     this.enviando.set(true);
-    this.erro.set(false);
+    this.erro.set(null);
     const { email, senha } = this.form.getRawValue();
     try {
-      await this.auth.login(email, senha);
-      await this.irParaInicio();
-    } catch {
-      this.erro.set(true);
+      try {
+        await this.auth.login(email, senha);
+      } catch {
+        this.erro.set('E-mail ou senha inválidos.');
+        return;
+      }
+      try {
+        await this.irParaInicio();
+      } catch (e) {
+        // autenticou no Supabase, mas /me falhou: nao deixa a sessao aberta
+        await this.auth.logout();
+        this.erro.set(
+          e instanceof HttpErrorResponse && e.status === 403
+            ? 'Sua conta não tem acesso ao app.'
+            : 'Não foi possível entrar. Tente novamente.',
+        );
+      }
     } finally {
       this.enviando.set(false);
     }
