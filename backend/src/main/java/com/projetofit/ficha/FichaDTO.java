@@ -11,7 +11,7 @@ public record FichaDTO(UUID id, UUID alunoId, String nome, String objetivo, int 
                        LocalDate encerradaEm, List<DivisaoDTO> divisoes) {
 
     /** {@code encerradaEm} é a data, no fuso {@code zona}, em que a ficha foi encerrada ({@code null} se ativa). */
-    static FichaDTO de(Ficha f, LocalDate hoje, ZoneId zona) {
+    public static FichaDTO de(Ficha f, LocalDate hoje, ZoneId zona) {
         return new FichaDTO(f.getId(), f.getAluno().getId(), f.getNome(), f.getObjetivo(), f.getFrequenciaSemanal(),
                 f.getDataInicio(), f.getDataFim(), f.getStatus(), f.vencida(hoje),
                 encerradaEm(f, zona),
