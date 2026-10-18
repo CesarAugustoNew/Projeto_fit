@@ -9,7 +9,7 @@ export const alunoRoutes: Routes = [
   {
     path: '',
     component: Shell,
-    data: { itens },
+    data: { itens, titulo: 'Projeto Fit' },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'treino' },
       { path: 'treino', component: Treino },
