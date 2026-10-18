@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -7,13 +8,15 @@ import { UsuarioService } from '../usuario/usuario.service';
 import { papelGuard } from './papel.guard';
 
 describe('papelGuard', () => {
-  const auth = { logout: vi.fn() };
+  const auth = { logout: vi.fn(), estaLogado: vi.fn() };
   const atual = signal<Usuario | null>(null);
   const usuarioSvc = { usuario: atual, carregar: vi.fn() };
 
   beforeEach(() => {
     auth.logout.mockReset();
     auth.logout.mockResolvedValue(undefined);
+    auth.estaLogado.mockReset();
+    auth.estaLogado.mockResolvedValue(true);
     usuarioSvc.carregar.mockReset();
     atual.set(null);
     TestBed.configureTestingModule({
@@ -46,10 +49,37 @@ describe('papelGuard', () => {
     expect(TestBed.inject(Router).serializeUrl(r as never)).toBe('/aluno/treino');
   });
 
-  it('falha ao carregar /me desloga e vai para /login', async () => {
-    usuarioSvc.carregar.mockRejectedValue(new Error('403'));
+  it('sem sessão vai para /login sem chamar /me', async () => {
+    auth.estaLogado.mockResolvedValue(false);
+    const r = await executar('PERSONAL');
+    expect(usuarioSvc.carregar).not.toHaveBeenCalled();
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(TestBed.inject(Router).serializeUrl(r as never)).toBe('/login');
+  });
+
+  it('/me com 403 desloga e vai para /login', async () => {
+    usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 403 }));
     const r = await executar('PERSONAL');
     expect(auth.logout).toHaveBeenCalled();
     expect(TestBed.inject(Router).serializeUrl(r as never)).toBe('/login');
+  });
+
+  it('/me com 401 desloga e vai para /login', async () => {
+    usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 401 }));
+    const r = await executar('PERSONAL');
+    expect(auth.logout).toHaveBeenCalled();
+    expect(TestBed.inject(Router).serializeUrl(r as never)).toBe('/login');
+  });
+
+  it('/me com 500 não desloga e bloqueia a navegação', async () => {
+    usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+    expect(await executar('PERSONAL')).toBe(false);
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('/me sem conexão (status 0) não desloga e bloqueia a navegação', async () => {
+    usuarioSvc.carregar.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+    expect(await executar('PERSONAL')).toBe(false);
+    expect(auth.logout).not.toHaveBeenCalled();
   });
 });
