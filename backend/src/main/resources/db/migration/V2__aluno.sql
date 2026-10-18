@@ -1,5 +1,5 @@
 create table aluno (
-    id              uuid primary key,
+    id              uuid primary key default gen_random_uuid(),
     usuario_id      uuid not null unique references usuario (id),
     personal_id     uuid not null references usuario (id),
     telefone        text,
