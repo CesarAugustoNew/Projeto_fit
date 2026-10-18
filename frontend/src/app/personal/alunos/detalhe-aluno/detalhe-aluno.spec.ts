@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Aluno } from '../aluno.model';
 import { AlunoService } from '../aluno.service';
+import { FichaService } from '../../fichas/ficha.service';
 import { DetalheAluno } from './detalhe-aluno';
 
 const aluno = (extra: Partial<Aluno> = {}): Aluno => ({
@@ -37,6 +38,7 @@ describe('DetalheAluno', () => {
       providers: [
         provideRouter([]),
         { provide: AlunoService, useValue: { buscar, alterarStatus, reenviarConvite } },
+        { provide: FichaService, useValue: { listarDoAluno: vi.fn().mockResolvedValue([]) } },
         { provide: MatSnackBar, useValue: { open } },
         { provide: MatDialog, useValue: { open: dialogOpen } },
       ],
