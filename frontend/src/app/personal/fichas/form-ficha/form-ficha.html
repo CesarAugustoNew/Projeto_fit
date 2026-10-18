@@ -36,7 +36,7 @@
         <app-editor-divisao
           [form]="d"
           [posicao]="i"
-          (remover)="removerDivisao(i)"
+          (remover)="removerDivisao(d)"
           (subir)="moverDivisao(i, -1)"
           (descer)="moverDivisao(i, 1)"
         />
@@ -48,6 +48,9 @@
       </button>
     }
 
+    @if (tentouEnviar() && divisoes.length === 0) {
+      <p class="erro-geral" role="alert">Adicione pelo menos uma divisão.</p>
+    }
     @if (tentouEnviar() && form.invalid) {
       <p class="erro-geral" role="alert">Revise os campos destacados.</p>
     }

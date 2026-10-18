@@ -65,6 +65,8 @@ interface Opcoes {
   confirma?: boolean;
   falhaCarga?: boolean;
   falhaSalvar?: boolean;
+  listar?: ReturnType<typeof vi.fn>;
+  carregada?: Partial<Ficha>;
 }
 
 describe('FormFicha', () => {
@@ -79,13 +81,13 @@ describe('FormFicha', () => {
   async function montar(o: Opcoes = {}) {
     criar = vi.fn().mockResolvedValue(ficha({ id: 'nova' }));
     atualizar = vi.fn().mockResolvedValue(ficha());
-    buscar = vi.fn().mockResolvedValue(ficha());
+    buscar = vi.fn().mockResolvedValue(ficha(o.carregada));
     if (o.falhaCarga) buscar.mockRejectedValue(new Error('404'));
     if (o.falhaSalvar) {
       criar.mockRejectedValue(new Error('409'));
       atualizar.mockRejectedValue(new Error('409'));
     }
-    listarDoAluno = vi.fn().mockResolvedValue(o.existentes ?? []);
+    listarDoAluno = o.listar ?? vi.fn().mockResolvedValue(o.existentes ?? []);
     dialogOpen = vi.fn().mockReturnValue({ afterClosed: () => of(o.confirma ?? true) });
     open = vi.fn();
     TestBed.configureTestingModule({
@@ -129,6 +131,10 @@ describe('FormFicha', () => {
     await f.whenStable();
     f.detectChanges();
   };
+  const removerDivisaoBtn = (f: Fx, i: number) =>
+    el(f).querySelectorAll<HTMLButtonElement>('button[aria-label="Remover divisão"]')[i];
+  const componente = (f: Fx) => f.componentInstance as FormFicha;
+  const tick = () => new Promise((r) => setTimeout(r));
   const salvarBtn = (f: Fx) => el(f).querySelector('button[type="submit"]') as HTMLButtonElement;
   const botao = (f: Fx, texto: string) =>
     Array.from(el(f).querySelectorAll('button')).find((b) => b.textContent?.trim() === texto);
@@ -166,7 +172,7 @@ describe('FormFicha', () => {
     expect(dados.divisoes[0].nome).toBe('Treino A');
     expect(dados.divisoes[0].itens.map((i: { exercicioId: string }) => i.exercicioId)).toEqual(['e1', 'e2']);
     expect(open).toHaveBeenCalledWith('Ficha criada.', undefined, expect.anything());
-    expect(navigate).toHaveBeenCalledWith(['/personal/fichas', 'nova']);
+    expect(navigate).toHaveBeenCalledWith(['/personal/fichas', 'nova'], { replaceUrl: true });
   });
 
   it('nova com ficha ativa pede confirmação e só envia se confirmado', async () => {
@@ -224,7 +230,7 @@ describe('FormFicha', () => {
     expect(dados.divisoes[0].id).toBe('d1');
     expect(dados.divisoes[0].itens[0].id).toBe('i1');
     expect(open).toHaveBeenCalledWith('Ficha atualizada.', undefined, expect.anything());
-    expect(navigate).toHaveBeenCalledWith(['/personal/fichas', 'f1']);
+    expect(navigate).toHaveBeenCalledWith(['/personal/fichas', 'f1'], { replaceUrl: true });
   });
 
   it('editar: cancelar volta ao detalhe do aluno da ficha', async () => {
@@ -271,5 +277,151 @@ describe('FormFicha', () => {
     (el(f).querySelectorAll('button[aria-label="Descer divisão"]')[0] as HTMLButtonElement).click();
     f.detectChanges();
     expect(nomes(f)).toEqual(['Treino B', 'Treino A']);
+  });
+
+  it('submit antes da consulta terminar ainda pede confirmação', async () => {
+    let responder!: (l: FichaResumo[]) => void;
+    const listar = vi.fn().mockReturnValue(new Promise<FichaResumo[]>((r) => (responder = r)));
+    const f = await montar({ alunoId: 'a1', listar, confirma: false });
+    digitar(f, 'nome', 'Nova');
+    addItem(f, 'e1');
+    (el(f).querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    await tick();
+    expect(criar).not.toHaveBeenCalled();
+    responder([resumo()]);
+    await tick();
+    expect(dialogOpen).toHaveBeenCalledTimes(1);
+    expect(dialogOpen.mock.calls[0][1].data.titulo).toBe('Substituir ficha ativa');
+    expect(criar).not.toHaveBeenCalled();
+  });
+
+  it('falha na consulta não envia e avisa', async () => {
+    const listar = vi.fn().mockRejectedValue(new Error('500'));
+    const f = await montar({ alunoId: 'a1', listar });
+    digitar(f, 'nome', 'Nova');
+    addItem(f, 'e1');
+    await enviar(f);
+    await tick();
+    f.detectChanges();
+    expect(listar).toHaveBeenCalledTimes(2);
+    expect(criar).not.toHaveBeenCalled();
+    expect(open).toHaveBeenCalledWith(
+      'Não foi possível verificar a ficha ativa. Tente de novo.',
+      undefined,
+      expect.anything(),
+    );
+    expect(salvarBtn(f).disabled).toBe(false);
+  });
+
+  it('falha na consulta seguida de sucesso na nova tentativa envia normalmente', async () => {
+    const listar = vi.fn().mockRejectedValueOnce(new Error('500')).mockResolvedValue([]);
+    const f = await montar({ alunoId: 'a1', listar });
+    digitar(f, 'nome', 'Nova');
+    addItem(f, 'e1');
+    await enviar(f);
+    await tick();
+    expect(listar).toHaveBeenCalledTimes(2);
+    expect(dialogOpen).not.toHaveBeenCalled();
+    expect(criar).toHaveBeenCalledTimes(1);
+  });
+
+  it('remover divisão com exercícios pede confirmação e cancelado não remove', async () => {
+    const f = await montar({ alunoId: 'a1', confirma: false });
+    addItem(f, 'e1');
+    removerDivisaoBtn(f, 0).click();
+    await tick();
+    f.detectChanges();
+    expect(dialogOpen.mock.calls[0][1].data).toEqual({
+      titulo: 'Remover divisão',
+      mensagem: 'A divisão "Treino A" e seus 1 exercício serão removidos.',
+      confirmar: 'Remover',
+    });
+    expect(nomes(f)).toEqual(['Treino A']);
+  });
+
+  it('remover divisão com exercícios confirmado remove', async () => {
+    const f = await montar({ alunoId: 'a1', confirma: true });
+    addItem(f, 'e1');
+    addItem(f, 'e2');
+    removerDivisaoBtn(f, 0).click();
+    await tick();
+    f.detectChanges();
+    expect(dialogOpen.mock.calls[0][1].data.mensagem).toBe(
+      'A divisão "Treino A" e seus 2 exercícios serão removidos.',
+    );
+    expect(nomes(f)).toEqual([]);
+  });
+
+  it('remover divisão sem exercícios remove sem perguntar', async () => {
+    const f = await montar({ alunoId: 'a1' });
+    removerDivisaoBtn(f, 0).click();
+    await tick();
+    f.detectChanges();
+    expect(dialogOpen).not.toHaveBeenCalled();
+    expect(nomes(f)).toEqual([]);
+  });
+
+  it('adicionar divisão reaproveita a primeira letra livre', async () => {
+    const f = await montar({ alunoId: 'a1' });
+    botao(f, 'Adicionar divisão')!.click();
+    botao(f, 'Adicionar divisão')!.click();
+    f.detectChanges();
+    expect(nomes(f)).toEqual(['Treino A', 'Treino B', 'Treino C']);
+    removerDivisaoBtn(f, 1).click();
+    await tick();
+    f.detectChanges();
+    botao(f, 'Adicionar divisão')!.click();
+    f.detectChanges();
+    expect(nomes(f)).toEqual(['Treino A', 'Treino C', 'Treino B']);
+  });
+
+  it('sem divisões, salvar mostra Adicione pelo menos uma divisão.', async () => {
+    const f = await montar({ alunoId: 'a1' });
+    digitar(f, 'nome', 'Nova');
+    removerDivisaoBtn(f, 0).click();
+    await tick();
+    f.detectChanges();
+    expect(el(f).textContent).not.toContain('Adicione pelo menos uma divisão.');
+    await enviar(f);
+    expect(criar).not.toHaveBeenCalled();
+    expect(el(f).textContent).toContain('Adicione pelo menos uma divisão.');
+  });
+
+  it('editar ficha encerrada volta para a visualização e avisa', async () => {
+    await montar({ id: 'f1', carregada: { status: 'ENCERRADA' } });
+    expect(navigate).toHaveBeenCalledWith(['/personal/fichas', 'f1'], { replaceUrl: true });
+    expect(open).toHaveBeenCalledWith(
+      'Esta ficha está encerrada e não pode ser editada.',
+      undefined,
+      expect.anything(),
+    );
+  });
+
+  it('temAlteracoesNaoSalvas: falso ao abrir, verdadeiro ao alterar, falso depois de salvar', async () => {
+    const f = await montar({ id: 'f1' });
+    expect(componente(f).temAlteracoesNaoSalvas()).toBe(false);
+    digitar(f, 'nome', 'Outro nome');
+    expect(componente(f).temAlteracoesNaoSalvas()).toBe(true);
+    await enviar(f);
+    expect(atualizar).toHaveBeenCalledTimes(1);
+    expect(componente(f).temAlteracoesNaoSalvas()).toBe(false);
+  });
+
+  it('temAlteracoesNaoSalvas continua verdadeiro se salvar falhar', async () => {
+    const f = await montar({ id: 'f1', falhaSalvar: true });
+    digitar(f, 'nome', 'Outro nome');
+    await enviar(f);
+    expect(componente(f).temAlteracoesNaoSalvas()).toBe(true);
+  });
+
+  it('beforeunload só é bloqueado com alterações não salvas', async () => {
+    const f = await montar({ alunoId: 'a1' });
+    const limpo = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(limpo);
+    expect(limpo.defaultPrevented).toBe(false);
+    digitar(f, 'nome', 'Nova');
+    const sujo = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(sujo);
+    expect(sujo.defaultPrevented).toBe(true);
   });
 });
