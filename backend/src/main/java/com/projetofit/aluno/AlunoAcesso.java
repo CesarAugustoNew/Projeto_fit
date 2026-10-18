@@ -1,5 +1,6 @@
 package com.projetofit.aluno;
 
+import com.projetofit.usuario.AcessoDoAluno;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
  * acesso de um aluno {@link StatusAluno#CONVIDADO} (convite aceito) o torna {@link StatusAluno#ATIVO}.
  */
 @Component
-public class AlunoAcesso {
+public class AlunoAcesso implements AcessoDoAluno {
 
     private final AlunoRepository alunoRepository;
 
@@ -18,6 +19,7 @@ public class AlunoAcesso {
     }
 
     /** {@code false} sem cadastro de aluno ou com aluno {@link StatusAluno#INATIVO}. */
+    @Override
     @Transactional
     public boolean liberar(UUID usuarioId) {
         return alunoRepository.findByUsuarioId(usuarioId)
