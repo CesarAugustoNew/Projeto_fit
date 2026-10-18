@@ -1,0 +1,94 @@
+@if (local.emAndamento(); as andamento) {
+  <section class="execucao">
+    <header class="cabecalho">
+      <h2>{{ andamento.divisaoNome }}</h2>
+      <span class="tempo">{{ minutos() }} min</span>
+    </header>
+
+    @for (e of andamento.exercicios; track e.itemDivisaoId; let ei = $index) {
+      <article class="card">
+        <h3 class="nome">{{ e.exercicioNome }}</h3>
+        <span class="info">{{ prescricao(e) }}</span>
+        @if (e.prescricao.observacao) {
+          <span class="obs">{{ e.prescricao.observacao }}</span>
+        }
+
+        @for (s of e.series; track s.numero; let si = $index) {
+          <div class="serie">
+            <span class="numero">Série {{ s.numero }}</span>
+            <mat-form-field class="campo" subscriptSizing="dynamic">
+              <mat-label>Carga (kg)</mat-label>
+              <input
+                matInput
+                type="number"
+                inputmode="decimal"
+                step="0.5"
+                min="0"
+                aria-label="Carga (kg)"
+                [value]="s.cargaKg ?? ''"
+                (input)="mudarCarga(ei, si, $any($event.target).value)"
+              />
+            </mat-form-field>
+            <mat-form-field class="campo" subscriptSizing="dynamic">
+              <mat-label>Repetições</mat-label>
+              <input
+                matInput
+                type="number"
+                inputmode="numeric"
+                step="1"
+                min="0"
+                aria-label="Repetições"
+                [value]="s.repeticoes ?? ''"
+                (input)="mudarRepeticoes(ei, si, $any($event.target).value)"
+              />
+            </mat-form-field>
+            <button
+              mat-flat-button
+              type="button"
+              class="concluir"
+              [disabled]="s.repeticoes === null && !s.concluida"
+              (click)="alternar(ei, si, s.concluida)"
+            >
+              @if (s.concluida) {
+                <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+              }
+              {{ s.concluida ? 'Concluída' : 'Concluir' }}
+            </button>
+            @if (s.repeticoes === null) {
+              <span class="aviso-campo" role="alert">Informe as repetições.</span>
+            }
+          </div>
+        }
+
+        <button mat-stroked-button type="button" class="grande" (click)="local.adicionarSerie(ei)">
+          Adicionar série
+        </button>
+      </article>
+    }
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Como foi o treino?</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        maxlength="1000"
+        [value]="andamento.observacao"
+        (input)="local.atualizarObservacao($any($event.target).value)"
+      ></textarea>
+    </mat-form-field>
+
+    @if (erro(); as msg) {
+      <p class="erro" role="alert">{{ msg }}</p>
+    }
+
+    <button
+      mat-flat-button
+      type="button"
+      class="grande finalizar"
+      [disabled]="finalizando()"
+      (click)="finalizar()"
+    >
+      Finalizar treino
+    </button>
+  </section>
+}

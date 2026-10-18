@@ -16,6 +16,10 @@ export const alunoRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'treino' },
       { path: 'treino', component: Treino },
+      {
+        path: 'treino/execucao',
+        loadComponent: () => import('./execucao/execucao').then((m) => m.Execucao),
+      },
     ],
   },
 ];

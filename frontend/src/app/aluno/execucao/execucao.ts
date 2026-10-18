@@ -1,0 +1,107 @@
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { confirmar } from '../../shared/confirmacao/confirmacao-dialog';
+import { ExercicioEmAndamento } from '../sessao-local/sessao-local.model';
+import { SessaoLocalService } from '../sessao-local/sessao-local.service';
+
+const ROTA_TREINO = '/aluno/treino';
+const MENSAGENS = {
+  enviado: 'Treino registrado!',
+  pendente: 'Treino salvo. Ele será enviado quando houver conexão.',
+  recusado: 'O treino não pôde ser registrado. Veja o aviso na tela de treino.',
+};
+
+@Component({
+  selector: 'app-execucao',
+  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  templateUrl: './execucao.html',
+  styleUrl: './execucao.scss',
+})
+export class Execucao implements OnInit {
+  private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  protected readonly local = inject(SessaoLocalService);
+
+  protected readonly finalizando = signal(false);
+  protected readonly erro = signal<string | null>(null);
+  private readonly agora = signal(Date.now());
+
+  protected readonly minutos = computed(() => {
+    const inicio = this.local.emAndamento()?.iniciadaEm;
+    if (!inicio) return 0;
+    return Math.max(0, Math.floor((this.agora() - new Date(inicio).getTime()) / 60_000));
+  });
+
+  constructor() {
+    const timer = setInterval(() => this.agora.set(Date.now()), 60_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
+
+  ngOnInit(): void {
+    if (!this.local.emAndamento()) this.voltar();
+  }
+
+  protected prescricao(e: ExercicioEmAndamento): string {
+    const p = e.prescricao;
+    let texto = `${p.series} x ${p.repeticoes}`;
+    if (p.cargaKg !== null) texto += ` · ${p.cargaKg.toLocaleString('pt-BR')} kg`;
+    if (p.descansoSeg !== null) texto += ` · ${p.descansoSeg} s`;
+    return texto;
+  }
+
+  protected mudarCarga(ex: number, serie: number, valor: string): void {
+    const n = valor === '' ? null : Number(valor);
+    this.local.atualizarSerie(ex, serie, { cargaKg: n !== null && Number.isFinite(n) ? n : null });
+  }
+
+  protected mudarRepeticoes(ex: number, serie: number, valor: string): void {
+    const n = valor === '' ? null : Math.trunc(Number(valor));
+    if (n === null || !Number.isFinite(n)) {
+      // Série sem repetições nunca fica marcada como concluída.
+      this.local.atualizarSerie(ex, serie, { repeticoes: null, concluida: false });
+    } else {
+      this.local.atualizarSerie(ex, serie, { repeticoes: n });
+    }
+  }
+
+  protected alternar(ex: number, serie: number, concluida: boolean): void {
+    this.local.atualizarSerie(ex, serie, { concluida: !concluida });
+  }
+
+  protected async finalizar(): Promise<void> {
+    if (this.finalizando()) return;
+    const andamento = this.local.emAndamento();
+    if (!andamento) return;
+    this.finalizando.set(true);
+    this.erro.set(null);
+    try {
+      const temPendentes = andamento.exercicios.some((e) => e.series.some((s) => !s.concluida));
+      if (temPendentes) {
+        const ok = await confirmar(this.dialog, {
+          titulo: 'Finalizar treino',
+          mensagem: 'Algumas séries não foram concluídas e não serão registradas.',
+          confirmar: 'Finalizar',
+        });
+        if (!ok) return;
+      }
+      const resultado = await this.local.finalizar();
+      this.snackBar.open(MENSAGENS[resultado], undefined, { duration: 5000 });
+      this.voltar();
+    } catch (e) {
+      this.erro.set(e instanceof Error ? e.message : 'Não foi possível finalizar o treino.');
+    } finally {
+      this.finalizando.set(false);
+    }
+  }
+
+  private voltar(): void {
+    void this.router.navigate([ROTA_TREINO], { replaceUrl: true });
+  }
+}
