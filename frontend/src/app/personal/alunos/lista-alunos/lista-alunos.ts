@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
+import { normalizarBusca } from '../../../shared/texto/normalizar-busca';
 import { Aluno, ROTULO_STATUS } from '../aluno.model';
 import { AlunoService } from '../aluno.service';
 
@@ -37,10 +38,10 @@ export class ListaAlunos {
   protected readonly erro = signal(false);
 
   protected readonly visiveis = computed(() => {
-    const termo = this.busca().trim().toLowerCase();
+    const termo = normalizarBusca(this.busca());
     if (!termo) return this.alunos();
     return this.alunos().filter(
-      (a) => a.nome.toLowerCase().includes(termo) || a.email.toLowerCase().includes(termo),
+      (a) => normalizarBusca(a.nome).includes(termo) || normalizarBusca(a.email).includes(termo),
     );
   });
 

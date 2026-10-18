@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
+import { normalizarBusca } from '../../../shared/texto/normalizar-busca';
 import { Exercicio, GRUPOS, GrupoMuscular, ROTULO_GRUPO, linkSeguro } from '../exercicio.model';
 import { ExercicioService } from '../exercicio.service';
 
@@ -42,9 +43,9 @@ export class ListaExercicios {
   protected readonly erro = signal(false);
 
   protected readonly visiveis = computed(() => {
-    const termo = this.busca().trim().toLowerCase();
+    const termo = normalizarBusca(this.busca());
     if (!termo) return this.exercicios();
-    return this.exercicios().filter((e) => e.nome.toLowerCase().includes(termo));
+    return this.exercicios().filter((e) => normalizarBusca(e.nome).includes(termo));
   });
 
   constructor() {

@@ -74,14 +74,47 @@ describe('ListaExercicios', () => {
     expect(texto(f)).toContain('Nenhum exercício encontrado.');
   });
 
+  it('busca ignora acentos', async () => {
+    const f = await criar([exercicio('1', 'Tríceps testa'), exercicio('2', 'Remada')]);
+    const input = f.nativeElement.querySelector('input[type=search]') as HTMLInputElement;
+    input.value = 'triceps';
+    input.dispatchEvent(new Event('input'));
+    f.detectChanges();
+    expect(texto(f)).toContain('Tríceps testa');
+    expect(texto(f)).not.toContain('Remada');
+  });
+
+  it('select mostra "Todos" no padrão e depois de escolher Todos', async () => {
+    const f = await criar([]);
+    const valor = () =>
+      f.nativeElement.querySelector('.mat-mdc-select-value')?.textContent?.trim() ?? '';
+    expect(valor()).toContain('Todos');
+    (f.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
+    f.detectChanges();
+    const opcoes = Array.from(document.querySelectorAll('mat-option')) as HTMLElement[];
+    opcoes.find((o) => o.textContent?.includes('Costas'))!.click();
+    await f.whenStable();
+    f.detectChanges();
+    expect(valor()).toContain('Costas');
+    (f.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
+    f.detectChanges();
+    (Array.from(document.querySelectorAll('mat-option')) as HTMLElement[])
+      .find((o) => o.textContent?.includes('Todos'))!
+      .click();
+    await f.whenStable();
+    f.detectChanges();
+    expect(valor()).toContain('Todos');
+  });
+
   it('linkDoVideoAbreEmNovaAbaComNoopener', async () => {
     const f = await criar([
       exercicio('1', 'Supino', 'https://youtu.be/x'),
       exercicio('2', 'Malicioso', 'javascript:alert(1)'),
     ]);
-    const links = f.nativeElement.querySelectorAll('a[aria-label="Ver vídeo"]');
+    const links = f.nativeElement.querySelectorAll('a[aria-label^="Ver vídeo"]');
     expect(links.length).toBe(1);
     const a = links[0] as HTMLAnchorElement;
+    expect(a.getAttribute('aria-label')).toBe('Ver vídeo: Supino');
     expect(a.getAttribute('href')).toBe('https://youtu.be/x');
     expect(a.getAttribute('target')).toBe('_blank');
     expect(a.getAttribute('rel')).toContain('noopener');

@@ -66,6 +66,16 @@ describe('ListaAlunos', () => {
     expect(texto(f)).not.toContain('ana@x.com');
   });
 
+  it('busca ignora acentos', async () => {
+    const f = await criar([aluno('1', 'João', 'j@x.com'), aluno('2', 'Bruno', 'bruno@x.com')]);
+    const input = f.nativeElement.querySelector('input') as HTMLInputElement;
+    input.value = 'joao';
+    input.dispatchEvent(new Event('input'));
+    f.detectChanges();
+    expect(texto(f)).toContain('João');
+    expect(texto(f)).not.toContain('Bruno');
+  });
+
   it('mostra mensagens de lista vazia', async () => {
     const f = await criar([]);
     expect(texto(f)).toContain('Nenhum aluno cadastrado ainda.');

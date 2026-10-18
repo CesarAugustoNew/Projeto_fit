@@ -19,7 +19,7 @@
 
   <mat-form-field class="campo" appearance="outline">
     <mat-label>Grupo muscular</mat-label>
-    <mat-select [value]="grupo()" (selectionChange)="trocarGrupo($event.value)">
+    <mat-select canSelectNullableOptions [value]="grupo()" (selectionChange)="trocarGrupo($event.value)">
       <mat-option [value]="null">Todos</mat-option>
       @for (g of grupos; track g) {
         <mat-option [value]="g">{{ rotulos[g] }}</mat-option>
@@ -58,7 +58,7 @@
               [href]="video"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Ver vídeo"
+              [attr.aria-label]="'Ver vídeo: ' + exercicio.nome"
             >
               <mat-icon fontSet="material-symbols-outlined">play_circle</mat-icon>
             </a>
