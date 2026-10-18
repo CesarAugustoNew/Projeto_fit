@@ -50,14 +50,8 @@ public class ExercicioService {
         if (exercicioRepository.existsByPersonalIdAndNomeIgnoreCase(personalId, nome)) {
             throw new ConflitoException(NOME_REPETIDO);
         }
-        try {
-            Exercicio exercicio = exercicioRepository.saveAndFlush(new Exercicio(personalId, nome,
-                    req.grupoMuscular(), vazioParaNulo(req.videoUrl()), vazioParaNulo(req.observacao())));
-            return ExercicioDTO.de(exercicio);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Violação de integridade ao gravar o exercício; respondendo como nome repetido", e);
-            throw new ConflitoException(NOME_REPETIDO);
-        }
+        return ExercicioDTO.de(gravar(new Exercicio(personalId, nome, req.grupoMuscular(),
+                vazioParaNulo(req.videoUrl()), vazioParaNulo(req.observacao()))));
     }
 
     @Transactional
@@ -69,7 +63,20 @@ public class ExercicioService {
         }
         exercicio.atualizar(nome, req.grupoMuscular(), vazioParaNulo(req.videoUrl()),
                 vazioParaNulo(req.observacao()), req.ativo());
-        return ExercicioDTO.de(exercicio);
+        return ExercicioDTO.de(gravar(exercicio));
+    }
+
+    /**
+     * Grava já dentro do método: o índice único (personal, lower(nome)) só dispara no flush, e fora daqui a violação
+     * escaparia do proxy transacional como erro 500 em vez de 409 (corrida entre duas requisições).
+     */
+    private Exercicio gravar(Exercicio exercicio) {
+        try {
+            return exercicioRepository.saveAndFlush(exercicio);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Violação de integridade ao gravar o exercício; respondendo como nome repetido", e);
+            throw new ConflitoException(NOME_REPETIDO);
+        }
     }
 
     /** O exercício {@code id} do personal autenticado; o de outro personal é tratado como inexistente. */
