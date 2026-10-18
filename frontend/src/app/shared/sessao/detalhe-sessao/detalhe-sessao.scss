@@ -1,0 +1,45 @@
+.detalhe-sessao {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+
+  h1 {
+    margin: 8px 0 4px;
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    margin: 24px 0 8px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.resumo {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.mensagem {
+  text-align: center;
+  opacity: 0.7;
+  margin: 24px 0;
+}
+
+.series {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+  }
+}
+
+.observacao p {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

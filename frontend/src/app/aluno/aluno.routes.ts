@@ -20,6 +20,16 @@ export const alunoRoutes: Routes = [
         path: 'treino/execucao',
         loadComponent: () => import('./execucao/execucao').then((m) => m.Execucao),
       },
+      {
+        path: 'historico',
+        loadComponent: () => import('./historico/historico').then((m) => m.Historico),
+      },
+      {
+        path: 'historico/:id',
+        loadComponent: () =>
+          import('../shared/sessao/detalhe-sessao/detalhe-sessao').then((m) => m.DetalheSessao),
+        data: { voltarPara: '/aluno/historico' },
+      },
     ],
   },
 ];

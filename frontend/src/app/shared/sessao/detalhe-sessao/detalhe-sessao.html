@@ -1,0 +1,36 @@
+<section class="detalhe-sessao">
+  <a class="voltar" mat-button [routerLink]="voltarPara() ?? '/aluno/historico'">Voltar</a>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (sessao(); as s) {
+    <h1>{{ s.divisaoNome }}</h1>
+    <p class="resumo">
+      {{ formatarDataHora(s.iniciadaEm) }} · {{ duracaoMinutos(s.iniciadaEm, s.finalizadaEm) }} min
+    </p>
+
+    @for (g of grupos(); track g.exercicioId) {
+      <section class="exercicio">
+        <h2>{{ g.nome }}</h2>
+        <ul class="series">
+          @for (serie of g.series; track serie.numeroSerie) {
+            <li>
+              Série {{ serie.numeroSerie }}: {{ serie.repeticoes }} reps{{
+                serie.cargaKg !== null ? ' · ' + formatarCarga(serie.cargaKg) : ''
+              }}
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (s.observacao) {
+      <div class="observacao">
+        <h2>Observação</h2>
+        <p>{{ s.observacao }}</p>
+      </div>
+    }
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar o treino.</p>
+  }
+</section>
