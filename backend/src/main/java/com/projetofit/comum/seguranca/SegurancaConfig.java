@@ -60,6 +60,7 @@ public class SegurancaConfig {
                 Stream.of(appProperties.frontUrl(), ORIGEM_LOCAL).filter(Objects::nonNull).toList())));
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cors.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        cors.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();
         fonte.registerCorsConfiguration("/**", cors);
         return fonte;
