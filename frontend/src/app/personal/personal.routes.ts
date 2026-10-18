@@ -3,7 +3,10 @@ import { ItemNav } from '../layout/item-nav';
 import { Shell } from '../layout/shell';
 import { Dashboard } from './dashboard/dashboard';
 
-const itens: ItemNav[] = [{ rota: '/personal/dashboard', rotulo: 'Dashboard', icone: 'dashboard' }];
+const itens: ItemNav[] = [
+  { rota: '/personal/dashboard', rotulo: 'Dashboard', icone: 'dashboard' },
+  { rota: '/personal/alunos', rotulo: 'Alunos', icone: 'group' },
+];
 
 export const personalRoutes: Routes = [
   {
@@ -13,6 +16,10 @@ export const personalRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: Dashboard },
+      {
+        path: 'alunos',
+        loadComponent: () => import('./alunos/lista-alunos/lista-alunos').then((m) => m.ListaAlunos),
+      },
     ],
   },
 ];

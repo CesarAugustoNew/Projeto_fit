@@ -1,0 +1,48 @@
+<section class="lista-alunos">
+  <header class="cabecalho">
+    <h1>Alunos</h1>
+    <a mat-flat-button routerLink="/personal/alunos/novo">
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      Novo aluno
+    </a>
+  </header>
+
+  <mat-button-toggle-group
+    class="filtro"
+    aria-label="Filtrar por status"
+    [value]="filtro()"
+    (change)="trocarFiltro($event.value)"
+  >
+    <mat-button-toggle value="ATIVOS">Ativos</mat-button-toggle>
+    <mat-button-toggle value="INATIVOS">Inativos</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <mat-form-field class="busca" appearance="outline">
+    <mat-label>Buscar aluno</mat-label>
+    <input matInput type="search" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+  </mat-form-field>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando...</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar os alunos.</p>
+  } @else if (alunos().length === 0) {
+    <p class="mensagem">
+      {{ filtro() === 'INATIVOS' ? 'Nenhum aluno inativo.' : 'Nenhum aluno cadastrado ainda.' }}
+    </p>
+  } @else if (visiveis().length === 0) {
+    <p class="mensagem">Nenhum aluno encontrado.</p>
+  } @else {
+    <ul class="itens">
+      @for (aluno of visiveis(); track aluno.id) {
+        <li>
+          <a class="item" [routerLink]="['/personal/alunos', aluno.id]">
+            <span class="nome">{{ aluno.nome }}</span>
+            <span class="email">{{ aluno.email }}</span>
+            <span class="status">{{ rotulos[aluno.status] }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>
