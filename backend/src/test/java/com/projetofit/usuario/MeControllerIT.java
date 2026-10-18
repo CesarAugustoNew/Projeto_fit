@@ -11,7 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.projetofit.TesteIntegracao;
+import com.projetofit.aluno.Aluno;
 import com.projetofit.aluno.AlunoRepository;
+import com.projetofit.aluno.StatusAluno;
 import com.projetofit.seguranca.JwtDeTesteConfig;
 import com.projetofit.seguranca.TokenDeTeste;
 import jakarta.servlet.DispatcherType;
@@ -157,7 +159,7 @@ class MeControllerIT extends TesteIntegracao {
     @Test
     void alunoExistenteRetornaPapelAluno() throws Exception {
         UUID sub = UUID.randomUUID();
-        usuarioRepository.save(new Usuario(sub, "Ana", "ana@teste.com", Papel.ALUNO));
+        gravarAlunoAtivo(sub);
         mvc.perform(get("/api/me").header("Authorization", "Bearer " + TokenDeTeste.gerar(sub, "ana@teste.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(sub.toString()))
@@ -168,7 +170,7 @@ class MeControllerIT extends TesteIntegracao {
     @Test
     void alunoEmEndpointSoDoPersonalRetorna403PeloTratadorGlobal() throws Exception {
         UUID sub = UUID.randomUUID();
-        usuarioRepository.save(new Usuario(sub, "Ana", "ana@teste.com", Papel.ALUNO));
+        gravarAlunoAtivo(sub);
         mvc.perform(get("/api/teste/so-personal").header("Authorization", "Bearer " + TokenDeTeste.gerar(sub, "ana@teste.com")))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
@@ -234,5 +236,14 @@ class MeControllerIT extends TesteIntegracao {
                         .header("Access-Control-Request-Method", "GET")
                         .header("Access-Control-Request-Headers", "authorization"))
                 .andExpect(status().isForbidden());
+    }
+
+    private void gravarAlunoAtivo(UUID sub) {
+        UUID personalId = UUID.randomUUID();
+        usuarioRepository.save(new Usuario(personalId, "personal", "personal@teste.com", Papel.PERSONAL));
+        Usuario usuario = usuarioRepository.save(new Usuario(sub, "Ana", "ana@teste.com", Papel.ALUNO));
+        Aluno aluno = new Aluno(usuario, personalId, null, null, null, null);
+        aluno.alterarStatus(StatusAluno.ATIVO);
+        alunoRepository.save(aluno);
     }
 }

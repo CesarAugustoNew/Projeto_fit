@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.projetofit.aluno.AlunoAcesso;
 import com.projetofit.comum.AppProperties;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,8 +17,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 class UsuarioAtualResolverTest {
 
     private final UsuarioRepository repositorio = mock(UsuarioRepository.class);
+    private final AlunoAcesso alunoAcesso = mock(AlunoAcesso.class);
     private final UsuarioAtualResolver resolver = new UsuarioAtualResolver(repositorio,
-            new AppProperties("https://teste.supabase.co", "personal@teste.com", "http://localhost:4200", "chave-de-teste"));
+            new AppProperties("https://teste.supabase.co", "personal@teste.com", "http://localhost:4200", "chave-de-teste"),
+            alunoAcesso);
 
     @Test
     void insercaoConcorrenteRelêOUsuario() {
@@ -45,5 +48,14 @@ class UsuarioAtualResolverTest {
 
         assertThat(resolver.resolver(sub, null)).isEmpty();
         verify(repositorio, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void alunoInativoNaoTemPapel() {
+        UUID sub = UUID.randomUUID();
+        when(repositorio.findById(sub)).thenReturn(Optional.of(new Usuario(sub, "Ana", "ana@teste.com", Papel.ALUNO)));
+        when(alunoAcesso.liberar(sub)).thenReturn(false);
+
+        assertThat(resolver.resolver(sub, "ana@teste.com")).isEmpty();
     }
 }

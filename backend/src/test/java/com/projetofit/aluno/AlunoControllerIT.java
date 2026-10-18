@@ -2,13 +2,16 @@ package com.projetofit.aluno;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -135,6 +138,113 @@ class AlunoControllerIT extends TesteIntegracao {
         mvc.perform(get("/api/alunos")
                         .header("Authorization", "Bearer " + TokenDeTeste.gerar(alunoId, "ana@teste.com")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void alunoDeOutroPersonalFicaOculto() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "outra@teste.com", StatusAluno.ATIVO, gravarOutroPersonal());
+
+        mvc.perform(get("/api/alunos/{id}", aluno.getId()).header("Authorization", bearerPersonal()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Aluno não encontrado."));
+        mvc.perform(get("/api/alunos").header("Authorization", bearerPersonal()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void atualizarAlteraNomeEDadosMasNaoEmail() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.ATIVO, PERSONAL_ID);
+
+        mvc.perform(put("/api/alunos/{id}", aluno.getId()).header("Authorization", bearerPersonal())
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"nome\":\"Ana Souza\",\"telefone\":\"11999990000\",\"email\":\"outro@teste.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Ana Souza"))
+                .andExpect(jsonPath("$.telefone").value("11999990000"))
+                .andExpect(jsonPath("$.email").value("ana@teste.com"));
+        Usuario usuario = usuarioRepository.findById(aluno.getUsuario().getId()).orElseThrow();
+        assertThat(usuario.getNome()).isEqualTo("Ana Souza");
+        assertThat(usuario.getEmail()).isEqualTo("ana@teste.com");
+        assertThat(alunoRepository.findById(aluno.getId()).orElseThrow().getTelefone()).isEqualTo("11999990000");
+    }
+
+    @Test
+    void desativarEReativar() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.ATIVO, PERSONAL_ID);
+
+        alterarStatus(aluno.getId(), "INATIVO")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("INATIVO"));
+        alterarStatus(aluno.getId(), "ATIVO")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ATIVO"));
+        assertThat(alunoRepository.findById(aluno.getId()).orElseThrow().getStatus()).isEqualTo(StatusAluno.ATIVO);
+    }
+
+    @Test
+    void ativarConvidadoRetorna409() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
+
+        alterarStatus(aluno.getId(), "ATIVO")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("O aluno ainda não aceitou o convite."));
+    }
+
+    @Test
+    void statusConvidadoNoPatchRetorna409() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.INATIVO, PERSONAL_ID);
+
+        alterarStatus(aluno.getId(), "CONVIDADO")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Status inválido."));
+    }
+
+    @Test
+    void reenviarConviteSoParaConvidado() throws Exception {
+        Aluno convidado = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
+        Aluno ativo = gravarAluno(UUID.randomUUID(), "bruno@teste.com", StatusAluno.ATIVO, PERSONAL_ID);
+
+        mvc.perform(post("/api/alunos/{id}/reenviar-convite", convidado.getId()).header("Authorization", bearerPersonal()))
+                .andExpect(status().isNoContent());
+        verify(supabaseAdmin).convidar("ana@teste.com", "Ana");
+
+        mvc.perform(post("/api/alunos/{id}/reenviar-convite", ativo.getId()).header("Authorization", bearerPersonal()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail")
+                        .value("Só é possível reenviar o convite de um aluno com convite pendente."));
+        verify(supabaseAdmin, never()).convidar(eq("bruno@teste.com"), any());
+    }
+
+    @Test
+    void editarAlunoDeOutroPersonalRetorna404() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "outra@teste.com", StatusAluno.ATIVO, gravarOutroPersonal());
+
+        mvc.perform(put("/api/alunos/{id}", aluno.getId()).header("Authorization", bearerPersonal())
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"nome\":\"Invasor\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Aluno não encontrado."));
+        assertThat(usuarioRepository.findById(aluno.getUsuario().getId()).orElseThrow().getNome()).isEqualTo("Ana");
+    }
+
+    private ResultActions alterarStatus(UUID id, String status) throws Exception {
+        return mvc.perform(patch("/api/alunos/{id}/status", id).header("Authorization", bearerPersonal())
+                .contentType(APPLICATION_JSON)
+                .content("{\"status\":\"" + status + "\"}"));
+    }
+
+    private UUID gravarOutroPersonal() {
+        UUID id = UUID.randomUUID();
+        usuarioRepository.save(new Usuario(id, "outro personal", "outro-personal@teste.com", Papel.PERSONAL));
+        return id;
+    }
+
+    private Aluno gravarAluno(UUID usuarioId, String email, StatusAluno status, UUID personalId) {
+        Usuario usuario = usuarioRepository.save(new Usuario(usuarioId, "Ana", email, Papel.ALUNO));
+        Aluno aluno = new Aluno(usuario, personalId, null, null, null, null);
+        aluno.alterarStatus(status);
+        return alunoRepository.save(aluno);
     }
 
     private ResultActions criar(String nome, String email) throws Exception {

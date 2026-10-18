@@ -1,5 +1,6 @@
 package com.projetofit.usuario;
 
+import com.projetofit.aluno.AlunoAcesso;
 import com.projetofit.comum.AppProperties;
 import java.util.Locale;
 import java.util.Optional;
@@ -15,12 +16,15 @@ import org.springframework.stereotype.Component;
  * <p>Busca por {@code id} (= {@code sub}). No primeiro acesso do personal (e-mail igual a
  * {@code app.personal-email}, ignorando caixa) cria o usuário {@link Papel#PERSONAL}.
  *
- * <p>Ponto de extensão: a Etapa 2 acrescenta aqui a verificação de aluno {@code CONVIDADO}→{@code ATIVO} e
- * {@code INATIVO}→sem papel; a Etapa 3 acrescenta a semente de exercícios no bootstrap.
+ * <p>Usuário {@link Papel#ALUNO} passa por {@link AlunoAcesso#liberar}: o primeiro acesso de um aluno
+ * {@code CONVIDADO} o torna {@code ATIVO}; aluno {@code INATIVO} (ou sem cadastro de aluno) fica sem papel e recebe
+ * 403.
  *
- * <p>Sem {@code @Transactional} de propósito: cada chamada ao repositório tem a própria transação, então a
- * violação de unicidade de uma inserção concorrente não marca uma transação externa para rollback e a releitura
- * funciona.
+ * <p>Ponto de extensão: a Etapa 3 acrescenta a semente de exercícios no bootstrap.
+ *
+ * <p>Sem {@code @Transactional} de propósito: cada chamada ao repositório (e a {@link AlunoAcesso#liberar}) tem a
+ * própria transação, então a violação de unicidade de uma inserção concorrente não marca uma transação externa
+ * para rollback e a releitura funciona.
  */
 @Component
 public class UsuarioAtualResolver {
@@ -29,15 +33,22 @@ public class UsuarioAtualResolver {
 
     private final UsuarioRepository usuarioRepository;
     private final AppProperties appProperties;
+    private final AlunoAcesso alunoAcesso;
 
-    public UsuarioAtualResolver(UsuarioRepository usuarioRepository, AppProperties appProperties) {
+    public UsuarioAtualResolver(UsuarioRepository usuarioRepository, AppProperties appProperties,
+                                AlunoAcesso alunoAcesso) {
         this.usuarioRepository = usuarioRepository;
         this.appProperties = appProperties;
+        this.alunoAcesso = alunoAcesso;
     }
 
     public Optional<Usuario> resolver(UUID sub, String email) {
         Optional<Usuario> existente = usuarioRepository.findById(sub);
         if (existente.isPresent()) {
+            Usuario usuario = existente.get();
+            if (usuario.getPapel() == Papel.ALUNO && !alunoAcesso.liberar(usuario.getId())) {
+                return Optional.empty();
+            }
             return existente;
         }
         if (!ehEmailDoPersonal(email)) {

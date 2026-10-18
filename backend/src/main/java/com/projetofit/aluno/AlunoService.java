@@ -64,6 +64,7 @@ public class AlunoService {
         } catch (RuntimeException e) {
             excluirNoSupabase(id);
             if (e instanceof DataIntegrityViolationException) {
+                log.warn("Violação de integridade ao gravar o aluno; respondendo como e-mail já cadastrado", e);
                 throw new ConflitoException(EMAIL_JA_CADASTRADO);
             }
             throw e;
@@ -83,6 +84,44 @@ public class AlunoService {
     @Transactional(readOnly = true)
     public AlunoDTO buscar(UUID id) {
         return AlunoDTO.de(doPersonal(id));
+    }
+
+    /** Altera nome e dados do aluno; o e-mail não é editável. */
+    @Transactional
+    public AlunoDTO atualizar(UUID id, AtualizarAlunoRequest req) {
+        Aluno aluno = doPersonal(id);
+        aluno.getUsuario().alterarNome(req.nome().trim());
+        aluno.atualizarDados(req.telefone(), req.dataNascimento(), req.objetivo(), req.observacoes());
+        return AlunoDTO.de(aluno);
+    }
+
+    /**
+     * {@code INATIVO} a partir de qualquer status; {@code ATIVO} só a partir de {@code INATIVO} ou {@code ATIVO}
+     * (quem passa de {@code CONVIDADO} para {@code ATIVO} é o próprio aluno, no primeiro acesso).
+     */
+    @Transactional
+    public AlunoDTO alterarStatus(UUID id, StatusAluno novo) {
+        if (novo == StatusAluno.CONVIDADO) {
+            throw new ConflitoException("Status inválido.");
+        }
+        Aluno aluno = doPersonal(id);
+        if (novo == StatusAluno.ATIVO && aluno.getStatus() == StatusAluno.CONVIDADO) {
+            throw new ConflitoException("O aluno ainda não aceitou o convite.");
+        }
+        aluno.alterarStatus(novo);
+        return AlunoDTO.de(aluno);
+    }
+
+    /**
+     * Reenvia o convite pelo Supabase (o id devolvido é ignorado). Sem {@code @Transactional} de propósito: a
+     * chamada HTTP não segura transação aberta; o {@code usuario} já vem carregado por {@link #doPersonal}.
+     */
+    public void reenviarConvite(UUID id) {
+        Aluno aluno = doPersonal(id);
+        if (aluno.getStatus() != StatusAluno.CONVIDADO) {
+            throw new ConflitoException("Só é possível reenviar o convite de um aluno com convite pendente.");
+        }
+        supabaseAdmin.convidar(aluno.getUsuario().getEmail(), aluno.getUsuario().getNome());
     }
 
     /** O aluno {@code id} do personal autenticado; aluno de outro personal é tratado como inexistente. */

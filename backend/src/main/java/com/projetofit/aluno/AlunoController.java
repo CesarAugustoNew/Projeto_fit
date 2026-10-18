@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,5 +41,21 @@ public class AlunoController {
     @GetMapping("/{id}")
     public AlunoDTO buscar(@PathVariable UUID id) {
         return alunoService.buscar(id);
+    }
+
+    @PutMapping("/{id}")
+    public AlunoDTO atualizar(@PathVariable UUID id, @Valid @RequestBody AtualizarAlunoRequest req) {
+        return alunoService.atualizar(id, req);
+    }
+
+    @PatchMapping("/{id}/status")
+    public AlunoDTO alterarStatus(@PathVariable UUID id, @Valid @RequestBody AlterarStatusRequest req) {
+        return alunoService.alterarStatus(id, req.status());
+    }
+
+    @PostMapping("/{id}/reenviar-convite")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reenviarConvite(@PathVariable UUID id) {
+        alunoService.reenviarConvite(id);
     }
 }
