@@ -3,6 +3,7 @@ package com.projetofit.ficha;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
@@ -11,5 +12,5 @@ import java.util.UUID;
 public record DivisaoRequest(
         UUID id,
         @NotBlank @Size(max = 60) String nome,
-        @NotEmpty @Size(max = 20) List<@Valid ItemRequest> itens) {
+        @NotEmpty @Size(max = 20) List<@NotNull @Valid ItemRequest> itens) {
 }

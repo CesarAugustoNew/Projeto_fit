@@ -17,5 +17,5 @@ public record FichaRequest(
         @NotNull @Min(1) @Max(7) Integer frequenciaSemanal,
         @NotNull LocalDate dataInicio,
         LocalDate dataFim,
-        @NotEmpty @Size(max = 10) List<@Valid DivisaoRequest> divisoes) {
+        @NotEmpty @Size(max = 10) List<@NotNull @Valid DivisaoRequest> divisoes) {
 }

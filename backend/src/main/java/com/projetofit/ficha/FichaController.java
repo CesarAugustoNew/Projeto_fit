@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +37,15 @@ public class FichaController {
     @GetMapping("/api/fichas/{id}")
     public FichaDTO buscar(@PathVariable UUID id) {
         return fichaService.buscar(id);
+    }
+
+    @PutMapping("/api/fichas/{id}")
+    public FichaDTO atualizar(@PathVariable UUID id, @Valid @RequestBody FichaRequest req) {
+        return fichaService.atualizar(id, req);
+    }
+
+    @PostMapping("/api/fichas/{id}/encerrar")
+    public FichaDTO encerrar(@PathVariable UUID id) {
+        return fichaService.encerrar(id);
     }
 }

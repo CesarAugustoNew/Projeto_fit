@@ -1,6 +1,7 @@
 package com.projetofit.ficha;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +12,8 @@ public record FichaDTO(UUID id, UUID alunoId, String nome, String objetivo, int 
     static FichaDTO de(Ficha f, LocalDate hoje) {
         return new FichaDTO(f.getId(), f.getAluno().getId(), f.getNome(), f.getObjetivo(), f.getFrequenciaSemanal(),
                 f.getDataInicio(), f.getDataFim(), f.getStatus(), f.vencida(hoje),
-                f.getDivisoes().stream().map(DivisaoDTO::de).toList());
+                f.getDivisoes().stream()
+                        .sorted(Comparator.comparingInt(Divisao::getOrdem))
+                        .map(DivisaoDTO::de).toList());
     }
 }
