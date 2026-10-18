@@ -44,7 +44,8 @@ public class AlunoService {
      * Convida o aluno no Supabase e grava {@code usuario} + {@code aluno}. Sem {@code @Transactional} de propósito:
      * a chamada HTTP ao Supabase fica fora da transação, e só a gravação roda em {@link TransactionTemplate}. Se a
      * gravação falhar depois do convite, o usuário criado no Auth é excluído (compensação) para que o e-mail possa
-     * ser convidado de novo.
+     * ser convidado de novo — exceto se o id já pertence a um {@code usuario} salvo (duas requisições simultâneas com
+     * o mesmo e-mail recebem o mesmo id do Supabase; excluir apagaria o login do aluno gravado pela outra).
      */
     public AlunoDTO criar(NovoAlunoRequest req) {
         String email = req.email().trim().toLowerCase(Locale.ROOT);
@@ -62,7 +63,9 @@ public class AlunoService {
                 return AlunoDTO.de(aluno);
             });
         } catch (RuntimeException e) {
-            excluirNoSupabase(id);
+            if (!idJaSalvo(id)) {
+                excluirNoSupabase(id);
+            }
             if (e instanceof DataIntegrityViolationException) {
                 log.warn("Violação de integridade ao gravar o aluno; respondendo como e-mail já cadastrado", e);
                 throw new ConflitoException(EMAIL_JA_CADASTRADO);
@@ -118,21 +121,43 @@ public class AlunoService {
     }
 
     /**
-     * Reenvia o convite pelo Supabase (o id devolvido é ignorado). Sem {@code @Transactional} de propósito: a
-     * chamada HTTP não segura transação aberta; o {@code usuario} já vem carregado por {@link #doPersonal}.
+     * Reenvia o convite pelo Supabase (um id devolvido diferente do gravado só é registrado em log). Sem
+     * {@code @Transactional} de propósito: a chamada HTTP não segura transação aberta; o {@code usuario} já vem
+     * carregado por {@link #doPersonal}. O Supabase recusa o convite de quem já confirmou o e-mail (basta abrir o
+     * link); nesse caso o personal é orientado a pedir que o aluno use "Esqueci minha senha".
      */
     public void reenviarConvite(UUID id) {
         Aluno aluno = doPersonal(id);
         if (aluno.getStatus() != StatusAluno.CONVIDADO) {
             throw new ConflitoException("Só é possível reenviar o convite de um aluno com convite pendente.");
         }
-        supabaseAdmin.convidar(aluno.getUsuario().getEmail(), aluno.getUsuario().getNome());
+        Usuario usuario = aluno.getUsuario();
+        UUID devolvido;
+        try {
+            devolvido = supabaseAdmin.convidar(usuario.getEmail(), usuario.getNome());
+        } catch (ConflitoException e) {
+            throw new ConflitoException(
+                    "O aluno já confirmou o e-mail. Peça para ele usar \"Esqueci minha senha\" na tela de login.");
+        }
+        if (!usuario.getId().equals(devolvido)) {
+            log.error("Reenvio de convite: o Supabase devolveu o id {} para o usuário {}", devolvido, usuario.getId());
+        }
     }
 
     /** O aluno {@code id} do personal autenticado; aluno de outro personal é tratado como inexistente. */
     Aluno doPersonal(UUID id) {
         return alunoRepository.findByIdAndPersonalId(id, usuarioAtual.id())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Aluno não encontrado."));
+    }
+
+    /** Na dúvida (falha ao consultar), considera salvo: melhor um usuário órfão no Auth do que apagar um login válido. */
+    private boolean idJaSalvo(UUID id) {
+        try {
+            return usuarioRepository.existsById(id);
+        } catch (RuntimeException e) {
+            log.error("Falha ao verificar se o usuário {} já está gravado; o usuário no Supabase não será excluído", id, e);
+            return true;
+        }
     }
 
     private void excluirNoSupabase(UUID id) {

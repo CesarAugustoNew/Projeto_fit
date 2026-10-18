@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,5 +61,14 @@ class AlunoServiceTest {
                 .isInstanceOf(ConflitoException.class)
                 .hasMessage("E-mail já cadastrado.");
         verify(supabaseAdmin).excluirUsuario(ID);
+    }
+
+    @Test
+    void naoExcluiNoSupabaseSeOIdJaPertenceAUmUsuarioSalvo() {
+        when(usuarioRepository.existsById(ID)).thenReturn(true);
+        assertThatThrownBy(() -> service.criar(req))
+                .isInstanceOf(ConflitoException.class)
+                .hasMessage("E-mail já cadastrado.");
+        verify(supabaseAdmin, never()).excluirUsuario(any());
     }
 }

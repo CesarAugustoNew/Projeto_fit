@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.projetofit.TesteIntegracao;
+import com.projetofit.comum.erro.ConflitoException;
 import com.projetofit.comum.erro.IntegracaoExternaException;
 import com.projetofit.comum.supabase.SupabaseAdmin;
 import com.projetofit.seguranca.TokenDeTeste;
@@ -188,6 +189,7 @@ class AlunoControllerIT extends TesteIntegracao {
     @Test
     void reativarQuemNuncaEntrouVoltaParaConvidado() throws Exception {
         Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
+        when(supabaseAdmin.convidar("ana@teste.com", "Ana")).thenReturn(aluno.getUsuario().getId());
 
         alterarStatus(aluno.getId(), "INATIVO")
                 .andExpect(status().isOk())
@@ -222,6 +224,7 @@ class AlunoControllerIT extends TesteIntegracao {
     void reenviarConviteSoParaConvidado() throws Exception {
         Aluno convidado = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
         Aluno ativo = gravarAluno(UUID.randomUUID(), "bruno@teste.com", StatusAluno.ATIVO, PERSONAL_ID);
+        when(supabaseAdmin.convidar("ana@teste.com", "Ana")).thenReturn(convidado.getUsuario().getId());
 
         mvc.perform(post("/api/alunos/{id}/reenviar-convite", convidado.getId()).header("Authorization", bearerPersonal()))
                 .andExpect(status().isNoContent());
@@ -232,6 +235,17 @@ class AlunoControllerIT extends TesteIntegracao {
                 .andExpect(jsonPath("$.detail")
                         .value("Só é possível reenviar o convite de um aluno com convite pendente."));
         verify(supabaseAdmin, never()).convidar(eq("bruno@teste.com"), any());
+    }
+
+    @Test
+    void reenviarParaQuemJaConfirmouOrientaEsqueciSenha() throws Exception {
+        Aluno aluno = gravarAluno(UUID.randomUUID(), "ana@teste.com", StatusAluno.CONVIDADO, PERSONAL_ID);
+        when(supabaseAdmin.convidar(any(), any())).thenThrow(new ConflitoException("E-mail já cadastrado."));
+
+        mvc.perform(post("/api/alunos/{id}/reenviar-convite", aluno.getId()).header("Authorization", bearerPersonal()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value(
+                        "O aluno já confirmou o e-mail. Peça para ele usar \"Esqueci minha senha\" na tela de login."));
     }
 
     @Test
