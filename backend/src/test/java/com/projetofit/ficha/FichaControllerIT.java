@@ -21,6 +21,7 @@ import com.projetofit.seguranca.TokenDeTeste;
 import com.projetofit.usuario.Papel;
 import com.projetofit.usuario.Usuario;
 import com.projetofit.usuario.UsuarioRepository;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,9 @@ class FichaControllerIT extends TesteIntegracao {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @Autowired
+    Clock clock;
 
     private Aluno aluno;
     private Exercicio supino;
@@ -139,9 +143,13 @@ class FichaControllerIT extends TesteIntegracao {
                 .andExpect(jsonPath("$[0].status").value("ATIVA"))
                 .andExpect(jsonPath("$[0].quantidadeDivisoes").value(1))
                 .andExpect(jsonPath("$[0].frequenciaSemanal").value(3))
+                .andExpect(jsonPath("$[0].encerradaEm").doesNotExist())
                 .andExpect(jsonPath("$[1].id").value(idAntiga))
                 .andExpect(jsonPath("$[1].status").value("ENCERRADA"))
+                .andExpect(jsonPath("$[1].encerradaEm").value(LocalDate.now(clock).toString()))
                 .andExpect(jsonPath("$[1].vencida").value(false));
+        mvc.perform(get("/api/fichas/{id}", idAntiga).header("Authorization", bearerPersonal()))
+                .andExpect(jsonPath("$.encerradaEm").value(LocalDate.now(clock).toString()));
     }
 
     @Test
@@ -492,6 +500,19 @@ class FichaControllerIT extends TesteIntegracao {
                 .andExpect(jsonPath("$.detail").value("A ficha já está encerrada."));
         mvc.perform(get("/api/fichas/{id}", fichaId).header("Authorization", bearerPersonal()))
                 .andExpect(jsonPath("$.status").value("ENCERRADA"));
+    }
+
+    @Test
+    void encerrarPreencheEncerradaEm() throws Exception {
+        String fichaId = criarFichaSimples("Ficha");
+        mvc.perform(get("/api/fichas/{id}", fichaId).header("Authorization", bearerPersonal()))
+                .andExpect(jsonPath("$.encerradaEm").doesNotExist());
+
+        encerrar(fichaId)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.encerradaEm").value(LocalDate.now(clock).toString()));
+        assertThat(jdbc.queryForObject("select encerrada_em is not null from ficha where id = ?::uuid",
+                Boolean.class, fichaId)).isTrue();
     }
 
     @Test

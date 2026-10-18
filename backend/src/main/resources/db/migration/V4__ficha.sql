@@ -7,6 +7,7 @@ create table ficha (
     data_inicio         date not null,
     data_fim            date,
     status              text not null check (status in ('ATIVA', 'ENCERRADA')),
+    encerrada_em        timestamptz,
     criado_em           timestamptz not null default now(),
     atualizado_em       timestamptz not null default now()
 );

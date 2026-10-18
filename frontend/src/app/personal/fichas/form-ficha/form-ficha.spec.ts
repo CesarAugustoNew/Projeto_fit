@@ -20,6 +20,7 @@ const ficha = (extra: Partial<Ficha> = {}): Ficha => ({
   dataFim: null,
   status: 'ATIVA',
   vencida: false,
+  encerradaEm: null,
   divisoes: [
     {
       id: 'd1',
@@ -53,6 +54,7 @@ const resumo = (extra: Partial<FichaResumo> = {}): FichaResumo => ({
   frequenciaSemanal: 3,
   quantidadeDivisoes: 1,
   vencida: false,
+  encerradaEm: null,
   ...extra,
 });
 

@@ -84,7 +84,7 @@ public class FichaService {
             log.warn("Violação de integridade ao gravar a ficha nova do aluno {}", alunoId, e);
             throw new ConflitoException("Este aluno já tem uma ficha ativa. Recarregue a página e tente de novo.");
         }
-        return FichaDTO.de(ficha, hoje());
+        return FichaDTO.de(ficha, hoje(), clock.getZone());
     }
 
     /** A ficha {@code ATIVA} primeiro; depois as encerradas, da mais recente para a mais antiga. */
@@ -94,13 +94,13 @@ public class FichaService {
         LocalDate hoje = hoje();
         return fichaRepository.findByAlunoIdOrderByDataInicioDescCriadoEmDesc(alunoId).stream()
                 .sorted(Comparator.comparing(f -> f.getStatus() != StatusFicha.ATIVA))
-                .map(f -> FichaResumoDTO.de(f, hoje))
+                .map(f -> FichaResumoDTO.de(f, hoje, clock.getZone()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public FichaDTO buscar(UUID id) {
-        return FichaDTO.de(doPersonal(id), hoje());
+        return FichaDTO.de(doPersonal(id), hoje(), clock.getZone());
     }
 
     /**
@@ -152,7 +152,7 @@ public class FichaService {
             log.warn("Violação de integridade ao gravar a edição da ficha {}", id, e);
             throw new ConflitoException("Não foi possível salvar a ficha. Recarregue a página e tente de novo.");
         }
-        return FichaDTO.de(ficha, hoje());
+        return FichaDTO.de(ficha, hoje(), clock.getZone());
     }
 
     @Transactional
@@ -162,7 +162,7 @@ public class FichaService {
             throw new ConflitoException("A ficha já está encerrada.");
         }
         ficha.encerrar();
-        return FichaDTO.de(fichaRepository.saveAndFlush(ficha), hoje());
+        return FichaDTO.de(fichaRepository.saveAndFlush(ficha), hoje(), clock.getZone());
     }
 
     /** A ficha {@code id} de um aluno do personal autenticado; a de outro personal é tratada como inexistente. */

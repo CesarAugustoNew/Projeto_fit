@@ -43,6 +43,9 @@
             <a class="item" [routerLink]="['/personal/fichas', f.id]">
               <span class="nome">{{ f.nome }}</span>
               <span class="info">{{ formatarData(f.dataInicio) }} a {{ formatarData(f.dataFim) }}</span>
+              @if (f.encerradaEm) {
+                <span class="info">Encerrada em {{ formatarData(f.encerradaEm) }}</span>
+              }
             </a>
           </li>
         }

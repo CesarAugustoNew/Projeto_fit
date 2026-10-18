@@ -32,6 +32,8 @@ export interface Ficha {
   dataFim: string | null;
   status: StatusFicha;
   vencida: boolean;
+  /** yyyy-MM-dd; null enquanto a ficha está ativa. */
+  encerradaEm: string | null;
   divisoes: Divisao[];
 }
 
@@ -44,6 +46,8 @@ export interface FichaResumo {
   frequenciaSemanal: number;
   quantidadeDivisoes: number;
   vencida: boolean;
+  /** yyyy-MM-dd; null enquanto a ficha está ativa. */
+  encerradaEm: string | null;
 }
 
 export interface ItemRequest {

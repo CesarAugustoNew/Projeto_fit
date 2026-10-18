@@ -53,6 +53,9 @@ public class Ficha {
     @Column(nullable = false)
     private StatusFicha status;
 
+    @Column(name = "encerrada_em")
+    private Instant encerradaEm;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private Instant criadoEm;
 
@@ -95,6 +98,7 @@ public class Ficha {
 
     public void encerrar() {
         this.status = StatusFicha.ENCERRADA;
+        this.encerradaEm = Instant.now();
     }
 
     public boolean vencida(LocalDate hoje) {
@@ -141,6 +145,10 @@ public class Ficha {
 
     public StatusFicha getStatus() {
         return status;
+    }
+
+    public Instant getEncerradaEm() {
+        return encerradaEm;
     }
 
     public Instant getCriadoEm() {

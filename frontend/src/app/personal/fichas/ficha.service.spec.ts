@@ -17,6 +17,7 @@ const ficha: Ficha = {
   dataFim: null,
   status: 'ATIVA',
   vencida: false,
+  encerradaEm: null,
   divisoes: [
     {
       id: 'd1',
@@ -79,6 +80,7 @@ describe('FichaService', () => {
       frequenciaSemanal: 4,
       quantidadeDivisoes: 2,
       vencida: false,
+      encerradaEm: null,
     };
     const promessa = service.listarDoAluno('a1');
     const req = http.expectOne(`${api}/api/alunos/a1/fichas`);

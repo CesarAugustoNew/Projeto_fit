@@ -7,7 +7,13 @@
     <h1>{{ f.nome }}</h1>
     <div class="etiquetas">
       <span class="etiqueta" [class.encerrada]="f.status === 'ENCERRADA'">
-        {{ f.status === 'ATIVA' ? 'Ativa' : 'Encerrada' }}
+        @if (f.status === 'ATIVA') {
+          Ativa
+        } @else if (f.encerradaEm) {
+          Encerrada em {{ formatarData(f.encerradaEm) }}
+        } @else {
+          Encerrada
+        }
       </span>
       @if (f.vencida) {
         <span class="etiqueta vencida">Vencida</span>

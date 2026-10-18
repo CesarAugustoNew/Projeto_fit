@@ -13,6 +13,7 @@ const ficha = (extra: Partial<FichaResumo> = {}): FichaResumo => ({
   frequenciaSemanal: 3,
   quantidadeDivisoes: 2,
   vencida: false,
+  encerradaEm: null,
   ...extra,
 });
 
@@ -80,6 +81,17 @@ describe('FichasDoAluno', () => {
     expect(t).toContain('30/09/2026');
     const anterior = Array.from(el(f).querySelectorAll('a')).find((a) => a.textContent?.includes('Base'));
     expect(anterior?.getAttribute('href')).toBe('/personal/fichas/f0');
+  });
+
+  it('ficha anterior mostra Encerrada em quando houver a data', async () => {
+    const { fixture: f } = await montar([
+      ficha(),
+      ficha({ id: 'f0', nome: 'Base', status: 'ENCERRADA', encerradaEm: '2026-09-20' }),
+      ficha({ id: 'f9', nome: 'Velha', status: 'ENCERRADA', encerradaEm: null }),
+    ]);
+    const itens = el(f).querySelectorAll('.itens li');
+    expect(itens[0].textContent).toContain('Encerrada em 20/09/2026');
+    expect(itens[1].textContent).not.toContain('Encerrada em');
   });
 
   it('aluno inativo não mostra Nova ficha', async () => {

@@ -17,6 +17,7 @@ const ficha = (extra: Partial<Ficha> = {}): Ficha => ({
   dataFim: '2026-12-01',
   status: 'ATIVA',
   vencida: false,
+  encerradaEm: null,
   divisoes: [
     {
       id: 'd1',
@@ -129,6 +130,16 @@ describe('VerFicha', () => {
     expect(el(f).textContent).toContain('Encerrada');
     expect(botao(f, 'Editar')).toBeFalsy();
     expect(botao(f, 'Encerrar')).toBeFalsy();
+  });
+
+  it('ficha encerrada mostra Encerrada em dd/MM/yyyy', async () => {
+    const f = await montar(ficha({ status: 'ENCERRADA', encerradaEm: '2026-10-15' }));
+    expect(el(f).textContent).toContain('Encerrada em 15/10/2026');
+  });
+
+  it('ficha ativa não mostra Encerrada em', async () => {
+    const f = await montar(ficha());
+    expect(el(f).textContent).not.toContain('Encerrada em');
   });
 
   it('ficha ativa mostra Editar apontando para a edição', async () => {
