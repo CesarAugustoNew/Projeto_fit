@@ -1,0 +1,71 @@
+<section class="divisao" [formGroup]="form()">
+  <h2 class="titulo">Divisão {{ posicao() + 1 }}</h2>
+  <header class="cabecalho">
+    <mat-form-field class="nome">
+      <mat-label>Nome da divisão</mat-label>
+      <input matInput formControlName="nome" maxlength="60" />
+      <mat-error>Informe o nome da divisão.</mat-error>
+    </mat-form-field>
+    <div class="acoes-divisao">
+      <button mat-icon-button type="button" aria-label="Subir divisão" (click)="subir.emit()">
+        <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+      </button>
+      <button mat-icon-button type="button" aria-label="Descer divisão" (click)="descer.emit()">
+        <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+      </button>
+      <button mat-icon-button type="button" aria-label="Remover divisão" (click)="remover.emit()">
+        <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <div formArrayName="itens" class="itens">
+    @for (item of form().controls.itens.controls; track item; let i = $index; let primeiro = $first; let ultimo = $last) {
+      <article class="item" [formGroupName]="i">
+        <div class="exercicio">
+          <strong>{{ item.controls.exercicioNome.value }}</strong>
+          <span class="grupo">{{ rotulo[item.controls.grupoMuscular.value] }}</span>
+        </div>
+        <div class="campos">
+          <mat-form-field>
+            <mat-label>Séries</mat-label>
+            <input matInput type="number" formControlName="series" min="1" max="20" />
+            <mat-error>Informe o número de séries (1 a 20).</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Repetições</mat-label>
+            <input matInput formControlName="repeticoes" maxlength="7" autocomplete="off" />
+            <mat-hint>Ex.: 10 ou 8-12</mat-hint>
+            <mat-error>Use um número (ex.: 10) ou uma faixa (ex.: 8-12).</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Carga (kg)</mat-label>
+            <input matInput type="number" inputmode="decimal" step="0.5" min="0" formControlName="cargaKg" />
+            <mat-error>A carga não pode ser negativa.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Descanso (s)</mat-label>
+            <input matInput type="number" min="0" max="3600" formControlName="descansoSeg" />
+            <mat-error>Use um descanso entre 0 e 3600 segundos.</mat-error>
+          </mat-form-field>
+        </div>
+        <mat-form-field>
+          <mat-label>Observação</mat-label>
+          <input matInput formControlName="observacao" maxlength="500" />
+        </mat-form-field>
+        <div class="acoes-item">
+          <button mat-stroked-button type="button" (click)="trocar(item)">Trocar exercício</button>
+          <button mat-stroked-button type="button" [disabled]="primeiro" (click)="mover(i, -1)">Subir</button>
+          <button mat-stroked-button type="button" [disabled]="ultimo" (click)="mover(i, 1)">Descer</button>
+          <button mat-stroked-button type="button" (click)="removerItem(i)">Remover exercício</button>
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (form().controls.itens.hasError('vazio') && (form().controls.itens.touched || form().touched)) {
+    <p class="erro" role="alert">Adicione pelo menos um exercício.</p>
+  }
+
+  <button mat-flat-button type="button" class="adicionar" (click)="adicionar()">Adicionar exercício</button>
+</section>
