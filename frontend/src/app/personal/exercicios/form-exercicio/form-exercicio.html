@@ -1,0 +1,41 @@
+<div class="form-exercicio">
+  <h1>{{ editando ? 'Editar exercício' : 'Novo exercício' }}</h1>
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <mat-form-field>
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="nome" maxlength="120" />
+      <mat-error>Informe o nome.</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Grupo muscular</mat-label>
+      <mat-select formControlName="grupoMuscular">
+        @for (g of grupos; track g) {
+          <mat-option [value]="g">{{ rotulo[g] }}</mat-option>
+        }
+      </mat-select>
+      <mat-error>Escolha o grupo muscular.</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Link do vídeo</mat-label>
+      <input matInput type="url" formControlName="videoUrl" maxlength="500" autocomplete="off" />
+      <mat-hint>Ex.: link do YouTube</mat-hint>
+      <mat-error>Informe um link começando com http:// ou https://.</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Observação</mat-label>
+      <textarea matInput formControlName="observacao" rows="3" maxlength="1000"></textarea>
+    </mat-form-field>
+    @if (editando) {
+      <div class="ativo">
+        <mat-slide-toggle formControlName="ativo">Exercício ativo</mat-slide-toggle>
+        @if (!form.controls.ativo.value) {
+          <p class="dica">Exercícios inativos não aparecem para novas fichas.</p>
+        }
+      </div>
+    }
+    <div class="acoes">
+      <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+      <button mat-flat-button type="submit" [disabled]="enviando() || carregando()">Salvar</button>
+    </div>
+  </form>
+</div>

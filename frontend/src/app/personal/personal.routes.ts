@@ -39,6 +39,16 @@ export const personalRoutes: Routes = [
         loadComponent: () =>
           import('./exercicios/lista-exercicios/lista-exercicios').then((m) => m.ListaExercicios),
       },
+      {
+        path: 'exercicios/novo',
+        loadComponent: () =>
+          import('./exercicios/form-exercicio/form-exercicio').then((m) => m.FormExercicio),
+      },
+      {
+        path: 'exercicios/:id/editar',
+        loadComponent: () =>
+          import('./exercicios/form-exercicio/form-exercicio').then((m) => m.FormExercicio),
+      },
     ],
   },
 ];
