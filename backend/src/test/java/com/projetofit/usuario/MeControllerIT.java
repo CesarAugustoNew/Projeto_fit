@@ -191,6 +191,16 @@ class MeControllerIT extends TesteIntegracao {
     }
 
     @Test
+    void rotaInexistenteRetorna404EmPtBr() throws Exception {
+        mvc.perform(get("/api/nao-existe")
+                        .header("Authorization", "Bearer " + TokenDeTeste.gerar(UUID.randomUUID(), "personal@teste.com")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.detail").value("Rota não encontrada."));
+    }
+
+    @Test
     void dispatchDeErroDoContainerNaoViraNaoAutenticado() throws Exception {
         // Simula o forward do Tomcat para /error após uma exceção que escapou da cadeia de filtros
         // (ex.: banco fora do ar durante a conversão do JWT): a resposta deve continuar 500, não 401/403.

@@ -82,4 +82,32 @@ class TratadorGlobalDeErrosTest {
                 .andExpect(jsonPath("$.title").value("Não autenticado"))
                 .andExpect(jsonPath("$.detail").value("Token ausente, inválido ou expirado."));
     }
+
+    @Test
+    void corpoMalformadoRetorna400() throws Exception {
+        mvc.perform(post("/teste/validacao").contentType(APPLICATION_JSON).content("{nome:"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Dados inválidos"))
+                .andExpect(jsonPath("$.detail").value("Corpo da requisição inválido."));
+    }
+
+    @Test
+    void tipoInvalidoRetorna400() throws Exception {
+        mvc.perform(get("/teste/numero/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Dados inválidos"))
+                .andExpect(jsonPath("$.detail").value("Parâmetro 'n' inválido."));
+    }
+
+    @Test
+    void validacaoDeParametroRetorna400ComErrors() throws Exception {
+        mvc.perform(get("/teste/param").param("qtd", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Dados inválidos"))
+                .andExpect(jsonPath("$.detail").value("Um ou mais campos são inválidos."))
+                .andExpect(jsonPath("$.errors.qtd").exists());
+    }
 }
