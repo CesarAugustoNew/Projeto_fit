@@ -26,7 +26,7 @@
                 min="0"
                 aria-label="Carga (kg)"
                 [value]="s.cargaKg ?? ''"
-                (input)="mudarCarga(ei, si, $any($event.target).value)"
+                (change)="mudarCarga(ei, si, $any($event.target).value)"
               />
             </mat-form-field>
             <mat-form-field class="campo" subscriptSizing="dynamic">
@@ -39,7 +39,7 @@
                 min="0"
                 aria-label="Repetições"
                 [value]="s.repeticoes ?? ''"
-                (input)="mudarRepeticoes(ei, si, $any($event.target).value)"
+                (change)="mudarRepeticoes(ei, si, $any($event.target).value)"
               />
             </mat-form-field>
             <button

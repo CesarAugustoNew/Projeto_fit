@@ -36,9 +36,19 @@ describe('Execucao', () => {
     finalizar: () => Promise<string> = () => Promise.resolve('enviado'),
     confirma = true,
   ) {
+    const andamento = signal(emAndamento);
     const sessaoLocal = {
-      emAndamento: signal(emAndamento),
-      atualizarSerie: vi.fn(),
+      emAndamento: andamento,
+      atualizarSerie: vi.fn((ex: number, si: number, m: object) =>
+        andamento.update((a) =>
+          a && {
+            ...a,
+            exercicios: a.exercicios.map((e, i) =>
+              i !== ex ? e : { ...e, series: e.series.map((x, j) => (j === si ? { ...x, ...m } : x)) },
+            ),
+          },
+        ),
+      ),
       adicionarSerie: vi.fn(),
       atualizarObservacao: vi.fn(),
       finalizar: vi.fn(finalizar),
@@ -97,22 +107,61 @@ describe('Execucao', () => {
     const { fixture: f, sessaoLocal } = await montar(sessao());
     const c = campo(f, 'Carga (kg)', 0);
     c.value = '42.5';
-    c.dispatchEvent(new Event('input'));
+    c.dispatchEvent(new Event('change'));
     expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 0, { cargaKg: 42.5 });
+  });
+
+  it('digitar input não grava até confirmar (change)', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const c = campo(f, 'Carga (kg)', 0);
+    c.value = '42.5';
+    c.dispatchEvent(new Event('input'));
+    expect(sessaoLocal.atualizarSerie).not.toHaveBeenCalled();
+  });
+
+  it('carga negativa ou acima do limite vira vazia', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const c = campo(f, 'Carga (kg)', 0);
+    for (const v of ['-5', '10000']) {
+      c.value = v;
+      c.dispatchEvent(new Event('change'));
+      expect(sessaoLocal.atualizarSerie).toHaveBeenLastCalledWith(0, 0, { cargaKg: null });
+    }
+    c.value = '42.567';
+    c.dispatchEvent(new Event('change'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenLastCalledWith(0, 0, { cargaKg: 42.57 });
+  });
+
+  it('repetições negativas ou acima de 999 bloqueiam Concluir', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const r = campo(f, 'Repetições', 1);
+    r.value = '-3';
+    r.dispatchEvent(new Event('change'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenLastCalledWith(0, 1, { repeticoes: null, concluida: false });
+    f.detectChanges();
+    const concluir = Array.from(el(f).querySelectorAll('button')).filter((b) =>
+      b.textContent?.includes('Concluir'),
+    );
+    expect(concluir[1].disabled).toBe(true);
+    r.value = '1000';
+    r.dispatchEvent(new Event('change'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenLastCalledWith(0, 1, { repeticoes: null, concluida: false });
   });
 
   it('apagar as repetições desmarca a série e Concluir fica bloqueado', async () => {
     const { fixture: f, sessaoLocal } = await montar(sessao(true));
     const r = campo(f, 'Repetições', 0);
     r.value = '';
-    r.dispatchEvent(new Event('input'));
+    r.dispatchEvent(new Event('change'));
+    f.detectChanges();
     expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 0, { repeticoes: null, concluida: false });
     // série 3 tem repetições vazias
     const concluir = Array.from(el(f).querySelectorAll('button')).filter((b) =>
       b.textContent?.includes('Concluir'),
     );
-    expect(concluir[0].disabled).toBe(false);
-    expect(concluir[1].disabled).toBe(true);
+    expect(concluir[0].disabled).toBe(true);
+    expect(concluir[1].disabled).toBe(false);
+    expect(concluir[2].disabled).toBe(true);
     expect(el(f).textContent).toContain('Informe as repetições.');
   });
 

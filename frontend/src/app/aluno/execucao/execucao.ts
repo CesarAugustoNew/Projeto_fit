@@ -10,6 +10,9 @@ import { confirmar } from '../../shared/confirmacao/confirmacao-dialog';
 import { ExercicioEmAndamento } from '../sessao-local/sessao-local.model';
 import { SessaoLocalService } from '../sessao-local/sessao-local.service';
 
+/** Limites aceitos pelo back. */
+const MAX_CARGA = 9999.99;
+const MAX_REPETICOES = 999;
 const ROTA_TREINO = '/aluno/treino';
 const MENSAGENS = {
   enviado: 'Treino registrado!',
@@ -57,17 +60,18 @@ export class Execucao implements OnInit {
   }
 
   protected mudarCarga(ex: number, serie: number, valor: string): void {
-    const n = valor === '' ? null : Number(valor);
-    this.local.atualizarSerie(ex, serie, { cargaKg: n !== null && Number.isFinite(n) ? n : null });
+    const n = valor === '' ? NaN : Number(valor);
+    const valida = Number.isFinite(n) && n >= 0 && n <= MAX_CARGA;
+    this.local.atualizarSerie(ex, serie, { cargaKg: valida ? Math.round(n * 100) / 100 : null });
   }
 
   protected mudarRepeticoes(ex: number, serie: number, valor: string): void {
-    const n = valor === '' ? null : Math.trunc(Number(valor));
-    if (n === null || !Number.isFinite(n)) {
-      // Série sem repetições nunca fica marcada como concluída.
-      this.local.atualizarSerie(ex, serie, { repeticoes: null, concluida: false });
-    } else {
+    const n = valor === '' ? NaN : Math.trunc(Number(valor));
+    if (Number.isFinite(n) && n >= 0 && n <= MAX_REPETICOES) {
       this.local.atualizarSerie(ex, serie, { repeticoes: n });
+    } else {
+      // Série sem repetições válidas nunca fica marcada como concluída.
+      this.local.atualizarSerie(ex, serie, { repeticoes: null, concluida: false });
     }
   }
 
