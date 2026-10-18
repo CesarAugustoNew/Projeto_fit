@@ -118,10 +118,31 @@ describe('Execucao', () => {
     r.dispatchEvent(new Event('input'));
     expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 2, { repeticoes: 10 });
     f.detectChanges();
-    const concluir = Array.from(el(f).querySelectorAll('button')).filter((b) =>
-      b.textContent?.includes('Concluir'),
-    );
-    expect(concluir[1].disabled).toBe(false);
+    const linha = r.closest('.serie')!;
+    expect(linha.querySelector<HTMLButtonElement>('button.concluir')!.disabled).toBe(false);
+  });
+
+  it('input não canônico ("42.50") não grava nem reescreve o campo', async () => {
+    const s = sessao();
+    s.exercicios[0].series[0].cargaKg = 42.5;
+    const { fixture: f, sessaoLocal } = await montar(s);
+    const c = campo(f, 'Carga (kg)', 0);
+    // o navegador/DOM já reporta "42." como "" (ignorado); "42.50" é o caso observável
+    c.value = '42.50';
+    c.dispatchEvent(new Event('input'));
+    f.detectChanges();
+    expect(sessaoLocal.atualizarSerie).not.toHaveBeenCalled();
+    expect(c.value).toBe('42.50');
+  });
+
+  it('input "42.567" não grava; change grava 42.57', async () => {
+    const { fixture: f, sessaoLocal } = await montar(sessao());
+    const c = campo(f, 'Carga (kg)', 0);
+    c.value = '42.567';
+    c.dispatchEvent(new Event('input'));
+    expect(sessaoLocal.atualizarSerie).not.toHaveBeenCalled();
+    c.dispatchEvent(new Event('change'));
+    expect(sessaoLocal.atualizarSerie).toHaveBeenCalledWith(0, 0, { cargaKg: 42.57 });
   });
 
   it('input vazio ou inválido não grava nem apaga o campo', async () => {
@@ -148,12 +169,16 @@ describe('Execucao', () => {
   it('finalizar tira o foco do campo ativo', async () => {
     const { fixture: f } = await montar(sessao());
     document.body.appendChild(el(f));
-    const c = campo(f, 'Repetições', 0);
-    c.focus();
-    expect(document.activeElement).toBe(c);
-    botao(f, 'Finalizar treino')!.click();
-    expect(document.activeElement).not.toBe(c);
-    await f.whenStable();
+    try {
+      const c = campo(f, 'Repetições', 0);
+      c.focus();
+      expect(document.activeElement).toBe(c);
+      botao(f, 'Finalizar treino')!.click();
+      expect(document.activeElement).not.toBe(c);
+      await f.whenStable();
+    } finally {
+      el(f).remove();
+    }
   });
 
   it('carga negativa ou acima do limite vira vazia', async () => {

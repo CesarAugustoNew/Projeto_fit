@@ -60,26 +60,29 @@ export class Execucao implements OnInit {
   }
 
   /**
-   * `final = false` (evento `input`): só grava se o texto já é um valor completo e válido,
-   * para não apagar o que o usuário está digitando. `final = true` (`change`): grava o
-   * valor ou `null` e limpa o campo quando inválido.
+   * `final = false` (evento `input`): só grava se o texto já é exatamente o valor normalizado
+   * (ex.: "42.5", mas não "42." nem "42.567"), para a edição do campo não ser reescrita
+   * enquanto o usuário digita. `final = true` (`change`): grava o valor normalizado ou `null`
+   * e limpa o campo quando inválido.
    */
   protected mudarCarga(ex: number, serie: number, evento: Event, final: boolean): void {
     const campo = evento.target as HTMLInputElement;
-    const n = campo.value === '' ? NaN : Number(campo.value);
+    const bruto = Number(campo.value);
+    const n = campo.value.trim() === '' ? NaN : Math.round(bruto * 100) / 100;
     const valida = Number.isFinite(n) && n >= 0 && n <= MAX_CARGA;
-    if (!valida && !final) return;
+    if (!final && !(valida && String(n) === campo.value.trim())) return;
     if (!valida) campo.value = '';
-    this.local.atualizarSerie(ex, serie, { cargaKg: valida ? Math.round(n * 100) / 100 : null });
+    this.local.atualizarSerie(ex, serie, { cargaKg: valida ? n : null });
   }
 
   protected mudarRepeticoes(ex: number, serie: number, evento: Event, final: boolean): void {
     const campo = evento.target as HTMLInputElement;
-    const n = campo.value === '' ? NaN : Math.trunc(Number(campo.value));
+    const n = campo.value.trim() === '' ? NaN : Math.trunc(Number(campo.value));
     const valida = Number.isFinite(n) && n >= 0 && n <= MAX_REPETICOES;
+    if (!final && !(valida && String(n) === campo.value.trim())) return;
     if (valida) {
       this.local.atualizarSerie(ex, serie, { repeticoes: n });
-    } else if (final) {
+    } else {
       campo.value = '';
       // Série sem repetições válidas nunca fica marcada como concluída.
       this.local.atualizarSerie(ex, serie, { repeticoes: null, concluida: false });
