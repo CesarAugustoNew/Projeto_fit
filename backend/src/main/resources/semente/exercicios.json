@@ -1,0 +1,178 @@
+[
+  {
+    "nome": "Supino reto com barra",
+    "grupoMuscular": "PEITO"
+  },
+  {
+    "nome": "Supino inclinado com halteres",
+    "grupoMuscular": "PEITO"
+  },
+  {
+    "nome": "Crucifixo com halteres",
+    "grupoMuscular": "PEITO"
+  },
+  {
+    "nome": "Crossover na polia",
+    "grupoMuscular": "PEITO"
+  },
+  {
+    "nome": "Flexão de braço",
+    "grupoMuscular": "PEITO"
+  },
+  {
+    "nome": "Puxada frontal",
+    "grupoMuscular": "COSTAS"
+  },
+  {
+    "nome": "Remada curvada com barra",
+    "grupoMuscular": "COSTAS"
+  },
+  {
+    "nome": "Remada baixa na polia",
+    "grupoMuscular": "COSTAS"
+  },
+  {
+    "nome": "Remada unilateral com halter",
+    "grupoMuscular": "COSTAS"
+  },
+  {
+    "nome": "Barra fixa",
+    "grupoMuscular": "COSTAS"
+  },
+  {
+    "nome": "Desenvolvimento com halteres",
+    "grupoMuscular": "OMBROS"
+  },
+  {
+    "nome": "Elevação lateral",
+    "grupoMuscular": "OMBROS"
+  },
+  {
+    "nome": "Elevação frontal",
+    "grupoMuscular": "OMBROS"
+  },
+  {
+    "nome": "Crucifixo inverso",
+    "grupoMuscular": "OMBROS"
+  },
+  {
+    "nome": "Rosca direta com barra",
+    "grupoMuscular": "BICEPS"
+  },
+  {
+    "nome": "Rosca alternada com halteres",
+    "grupoMuscular": "BICEPS"
+  },
+  {
+    "nome": "Rosca martelo",
+    "grupoMuscular": "BICEPS"
+  },
+  {
+    "nome": "Rosca Scott",
+    "grupoMuscular": "BICEPS"
+  },
+  {
+    "nome": "Tríceps na polia com corda",
+    "grupoMuscular": "TRICEPS"
+  },
+  {
+    "nome": "Tríceps testa",
+    "grupoMuscular": "TRICEPS"
+  },
+  {
+    "nome": "Tríceps francês",
+    "grupoMuscular": "TRICEPS"
+  },
+  {
+    "nome": "Mergulho no banco",
+    "grupoMuscular": "TRICEPS"
+  },
+  {
+    "nome": "Rosca de punho",
+    "grupoMuscular": "ANTEBRACO"
+  },
+  {
+    "nome": "Rosca inversa",
+    "grupoMuscular": "ANTEBRACO"
+  },
+  {
+    "nome": "Agachamento livre",
+    "grupoMuscular": "QUADRICEPS"
+  },
+  {
+    "nome": "Leg press 45°",
+    "grupoMuscular": "QUADRICEPS"
+  },
+  {
+    "nome": "Cadeira extensora",
+    "grupoMuscular": "QUADRICEPS"
+  },
+  {
+    "nome": "Afundo com halteres",
+    "grupoMuscular": "QUADRICEPS"
+  },
+  {
+    "nome": "Mesa flexora",
+    "grupoMuscular": "POSTERIORES"
+  },
+  {
+    "nome": "Stiff com barra",
+    "grupoMuscular": "POSTERIORES"
+  },
+  {
+    "nome": "Cadeira flexora",
+    "grupoMuscular": "POSTERIORES"
+  },
+  {
+    "nome": "Elevação pélvica",
+    "grupoMuscular": "GLUTEOS"
+  },
+  {
+    "nome": "Glúteo na polia",
+    "grupoMuscular": "GLUTEOS"
+  },
+  {
+    "nome": "Cadeira abdutora",
+    "grupoMuscular": "GLUTEOS"
+  },
+  {
+    "nome": "Panturrilha em pé",
+    "grupoMuscular": "PANTURRILHA"
+  },
+  {
+    "nome": "Panturrilha sentado",
+    "grupoMuscular": "PANTURRILHA"
+  },
+  {
+    "nome": "Abdominal supra",
+    "grupoMuscular": "ABDOMEN"
+  },
+  {
+    "nome": "Prancha",
+    "grupoMuscular": "ABDOMEN"
+  },
+  {
+    "nome": "Abdominal infra",
+    "grupoMuscular": "ABDOMEN"
+  },
+  {
+    "nome": "Esteira",
+    "grupoMuscular": "CARDIO"
+  },
+  {
+    "nome": "Bicicleta ergométrica",
+    "grupoMuscular": "CARDIO"
+  },
+  {
+    "nome": "Elíptico",
+    "grupoMuscular": "CARDIO"
+  },
+  {
+    "nome": "Burpee",
+    "grupoMuscular": "CORPO_INTEIRO"
+  },
+  {
+    "nome": "Levantamento terra",
+    "grupoMuscular": "CORPO_INTEIRO"
+  }
+]

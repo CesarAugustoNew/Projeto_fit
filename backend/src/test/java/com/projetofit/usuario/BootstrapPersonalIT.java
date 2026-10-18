@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataIntegrityViolationException;
 
 class BootstrapPersonalIT extends TesteIntegracao {
 
@@ -69,6 +70,18 @@ class BootstrapPersonalIT extends TesteIntegracao {
         assertThatThrownBy(() -> bootstrapPersonal.criar(id, "personal", "personal@teste.com"))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(usuarioRepository.findById(id)).isEmpty();
+    }
+
+    @Test
+    void conflitoRealDeEmailAtravessaOProxyComoDataIntegrityViolation() {
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        bootstrapPersonal.criar(a, "personal", "personal@teste.com");
+
+        assertThatThrownBy(() -> bootstrapPersonal.criar(b, "personal", "personal@teste.com"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(ouvinte.recebidos).doesNotContain(b);
+        assertThat(usuarioRepository.findById(b)).isEmpty();
     }
 
     static class OuvinteDeTeste implements AoCriarPersonal {

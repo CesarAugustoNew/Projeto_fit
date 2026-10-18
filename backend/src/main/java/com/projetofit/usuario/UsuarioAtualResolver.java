@@ -63,7 +63,7 @@ public class UsuarioAtualResolver {
             // Outra requisição criou o usuário ao mesmo tempo (ou o e-mail já pertence a outro id).
             Optional<Usuario> relido = usuarioRepository.findById(sub);
             if (relido.isEmpty()) {
-                log.warn("Bootstrap do personal recusado: e-mail já cadastrado para outro id (sub {})", sub);
+                log.warn("Bootstrap do personal não concluído para o sub {}", sub, e);
             }
             return relido;
         }
