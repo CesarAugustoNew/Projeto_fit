@@ -48,6 +48,15 @@ describe('authInterceptor', () => {
     expect(ehChamadaApi('/api/me', '')).toBe(true);
     expect(ehChamadaApi('https://exemplo.com/x', '')).toBe(false);
     expect(ehChamadaApi('http://exemplo.com/x', '')).toBe(false);
+    expect(ehChamadaApi('//exemplo.com/x', '')).toBe(false);
     expect(ehChamadaApi('http://localhost:8080/api/me', 'http://localhost:8080')).toBe(true);
+  });
+
+  it('não casa origens parecidas com a apiUrl', () => {
+    const api = 'http://localhost:8080';
+    expect(ehChamadaApi('http://localhost:80801/x', api)).toBe(false);
+    expect(ehChamadaApi('http://localhost:8080.evil.com/x', api)).toBe(false);
+    expect(ehChamadaApi('http://localhost:8080', api)).toBe(true);
+    expect(ehChamadaApi('http://localhost:8080?a=1', api)).toBe(true);
   });
 });

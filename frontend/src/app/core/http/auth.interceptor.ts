@@ -7,9 +7,13 @@ import { AuthService } from '../auth/auth.service';
 /** apiUrl vazia (produção até o deploy) = apenas URLs relativas. */
 export function ehChamadaApi(url: string, apiUrl: string): boolean {
   if (apiUrl === '') {
-    return !/^https?:\/\//i.test(url);
+    return !/^([a-z][a-z0-9+.-]*:)?\/\//i.test(url);
   }
-  return url.startsWith(apiUrl);
+  if (!url.startsWith(apiUrl)) {
+    return false;
+  }
+  const proximo = url.charAt(apiUrl.length);
+  return proximo === '' || proximo === '/' || proximo === '?' || proximo === '#';
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
