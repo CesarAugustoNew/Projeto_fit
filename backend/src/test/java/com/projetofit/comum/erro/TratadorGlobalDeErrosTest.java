@@ -52,6 +52,17 @@ class TratadorGlobalDeErrosTest {
     }
 
     @Test
+    void dadosInvalidosRetorna400ComCampo() throws Exception {
+        mvc.perform(get("/teste/dados-invalidos"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("Dados inválidos"))
+                .andExpect(jsonPath("$.detail").value("Um ou mais campos são inválidos."))
+                .andExpect(jsonPath("$.errors.dataFim")
+                        .value("A data de fim deve ser igual ou posterior à data de início."));
+    }
+
+    @Test
     void integracaoRetorna502() throws Exception {
         mvc.perform(get("/teste/externo"))
                 .andExpect(status().isBadGateway())

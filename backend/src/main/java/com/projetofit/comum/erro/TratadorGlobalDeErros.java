@@ -114,6 +114,14 @@ public class TratadorGlobalDeErros extends ResponseEntityExceptionHandler {
         return problema(HttpStatus.NOT_FOUND, "Recurso não encontrado", ex.getMessage());
     }
 
+    @ExceptionHandler(DadosInvalidosException.class)
+    ProblemDetail dadosInvalidos(DadosInvalidosException ex) {
+        ProblemDetail problema = problema(HttpStatus.BAD_REQUEST, "Dados inválidos",
+                "Um ou mais campos são inválidos.");
+        problema.setProperty("errors", Map.of(ex.getCampo(), ex.getMessage()));
+        return problema;
+    }
+
     @ExceptionHandler(ConflitoException.class)
     ProblemDetail conflito(ConflitoException ex) {
         return problema(HttpStatus.CONFLICT, "Conflito", ex.getMessage());
