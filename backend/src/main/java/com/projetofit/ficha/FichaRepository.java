@@ -12,4 +12,6 @@ public interface FichaRepository extends JpaRepository<Ficha, UUID> {
     List<Ficha> findByAlunoIdOrderByDataInicioDescCriadoEmDesc(UUID alunoId);
 
     Optional<Ficha> findByAlunoIdAndStatus(UUID alunoId, StatusFicha status);
+
+    List<Ficha> findByAlunoPersonalIdAndStatus(UUID personalId, StatusFicha status);
 }

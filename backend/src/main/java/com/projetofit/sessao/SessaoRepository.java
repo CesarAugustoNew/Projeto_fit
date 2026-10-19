@@ -27,4 +27,13 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
             + "and s.finalizadaEm >= :de and s.finalizadaEm < :ate")
     List<Instant> findFinalizadasEmEntre(@Param("alunoId") UUID alunoId, @Param("de") Instant de,
                                          @Param("ate") Instant ate);
+
+    @Query("select s.aluno.id, max(s.finalizadaEm) from Sessao s where s.aluno.personalId = :personalId "
+            + "group by s.aluno.id")
+    List<Object[]> ultimaSessaoPorAluno(@Param("personalId") UUID personalId);
+
+    @Query("select s.aluno.id, count(s) from Sessao s where s.aluno.personalId = :personalId "
+            + "and s.finalizadaEm >= :de and s.finalizadaEm < :ate group by s.aluno.id")
+    List<Object[]> sessoesPorAlunoEntre(@Param("personalId") UUID personalId, @Param("de") Instant de,
+                                        @Param("ate") Instant ate);
 }

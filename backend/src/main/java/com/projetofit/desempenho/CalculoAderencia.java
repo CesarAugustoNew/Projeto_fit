@@ -20,9 +20,14 @@ public final class CalculoAderencia {
     private CalculoAderencia() {
     }
 
+    /** Segunda-feira da semana (segunda a domingo) que contém a data. */
+    public static LocalDate segundaDaSemana(LocalDate data) {
+        return data.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    }
+
     public static List<SemanaAderenciaDTO> calcular(LocalDate hoje, int semanas, ZoneId zona,
                                                     List<Instant> finalizacoes, List<PeriodoFicha> fichas) {
-        LocalDate segundaAtual = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate segundaAtual = segundaDaSemana(hoje);
         List<SemanaAderenciaDTO> resultado = new ArrayList<>(semanas);
         for (int i = semanas - 1; i >= 0; i--) {
             LocalDate inicio = segundaAtual.minusWeeks(i);

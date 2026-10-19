@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class DesempenhoController {
 
     private final DesempenhoService service;
+    private final DashboardService dashboardService;
 
-    public DesempenhoController(DesempenhoService service) {
+    public DesempenhoController(DesempenhoService service, DashboardService dashboardService) {
         this.service = service;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/api/alunos/{alunoId}/desempenho/evolucao")
@@ -65,5 +67,11 @@ public class DesempenhoController {
     public List<SemanaAderenciaDTO> minhaAderencia(
             @RequestParam(defaultValue = "8") @Min(1) @Max(26) int semanas) {
         return service.aderencia(service.alunoLogado(), semanas);
+    }
+
+    @GetMapping("/api/dashboard")
+    @PreAuthorize("hasRole('PERSONAL')")
+    public List<DashboardAlunoDTO> dashboard() {
+        return dashboardService.dashboard();
     }
 }
