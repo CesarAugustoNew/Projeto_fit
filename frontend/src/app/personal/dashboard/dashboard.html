@@ -1,0 +1,53 @@
+<section class="dashboard">
+  <h1>Olá, {{ usuarios.usuario()?.nome }}</h1>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar o dashboard.</p>
+  } @else {
+    <div class="indicadores">
+      <div class="indicador">
+        <span class="valor">{{ alunos().length }}</span>
+        <span class="rotulo">Alunos ativos</span>
+      </div>
+      <div class="indicador">
+        <span class="valor">{{ sumiram() }}</span>
+        <span class="rotulo">Sumiram</span>
+      </div>
+      <div class="indicador">
+        <span class="valor">{{ fichasVencidas() }}</span>
+        <span class="rotulo">Fichas vencidas</span>
+      </div>
+    </div>
+
+    @if (alunos().length === 0) {
+      <p class="mensagem">
+        Nenhum aluno ativo ainda.
+        <a class="ir-alunos" routerLink="/personal/alunos">Ir para Alunos</a>
+      </p>
+    } @else {
+      <ul class="itens">
+        @for (aluno of alunos(); track aluno.alunoId) {
+          <li>
+            <a class="item" [routerLink]="['/personal/alunos', aluno.alunoId]">
+              <span class="nome">{{ aluno.nome }}</span>
+              <span class="detalhe">{{ treinosSemana(aluno) }}</span>
+              <span class="detalhe">{{ ultimoTreino(aluno.diasSemTreinar) }}</span>
+              @if (aluno.sumiu || aluno.fichaVencida) {
+                <span class="etiquetas">
+                  @if (aluno.sumiu) {
+                    <span class="etiqueta">Sumiu</span>
+                  }
+                  @if (aluno.fichaVencida) {
+                    <span class="etiqueta">Ficha vencida</span>
+                  }
+                </span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
