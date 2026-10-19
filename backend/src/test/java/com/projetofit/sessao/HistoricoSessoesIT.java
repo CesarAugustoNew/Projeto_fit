@@ -19,6 +19,9 @@ import com.projetofit.usuario.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -162,6 +165,39 @@ class HistoricoSessoesIT extends TesteIntegracao {
         mvc.perform(get("/api/me/sessoes?size=500").header("Authorization", bearer(USUARIO_ANA_ID, "ana@teste.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.size").value(50));
+    }
+
+    @Test
+    void sortDoClienteEhIgnorado() throws Exception {
+        mvc.perform(get("/api/me/sessoes?sort=foo").header("Authorization", bearer(USUARIO_ANA_ID, "ana@teste.com")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(maisRecente.getId().toString()));
+        mvc.perform(get("/api/me/sessoes?sort=divisaoNome,asc")
+                        .header("Authorization", bearer(USUARIO_ANA_ID, "ana@teste.com")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(maisRecente.getId().toString()))
+                .andExpect(jsonPath("$.content[2].id").value(maisAntiga.getId().toString()));
+        mvc.perform(get("/api/alunos/" + ana.getId() + "/sessoes?sort=foo").header("Authorization", bearerPersonal()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void mesmoHorarioDeFimTemOrdemEstavelPeloId() throws Exception {
+        Instant mesmoFim = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS);
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            ids.add(gravarSessao(bruno, "Empate " + i, mesmoFim, 1, 1).getId().toString());
+        }
+        // uuid no Postgres compara byte a byte, o mesmo que comparar o texto em minúsculas
+        ids.sort(Comparator.reverseOrder());
+
+        for (int pagina = 0; pagina < 3; pagina++) {
+            mvc.perform(get("/api/me/sessoes?size=2&page=" + pagina)
+                            .header("Authorization", bearer(USUARIO_BRUNO_ID, "bruno@teste.com")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].id").value(ids.get(pagina * 2)))
+                    .andExpect(jsonPath("$.content[1].id").value(ids.get(pagina * 2 + 1)));
+        }
     }
 
     private Aluno gravarAluno(UUID usuarioId, String nome, String email, UUID personalId) {

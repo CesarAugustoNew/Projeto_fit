@@ -112,7 +112,7 @@ class RegistrarSessaoIT extends TesteIntegracao {
                 .andExpect(jsonPath("$.clientId").value(clientId.toString()))
                 .andExpect(jsonPath("$.alunoId").value(ana.getId().toString()))
                 .andExpect(jsonPath("$.divisaoId").value(treinoA.getId().toString()))
-                .andExpect(jsonPath("$.divisaoNome").value("Treino A"))
+                .andExpect(jsonPath("$.divisaoNome").value("Outro nome"))
                 .andExpect(jsonPath("$.observacao").value("Pesado hoje"))
                 .andExpect(jsonPath("$.series.length()").value(3))
                 .andExpect(jsonPath("$.series[0].exercicioId").value(crucifixo.getId().toString()))
@@ -222,6 +222,21 @@ class RegistrarSessaoIT extends TesteIntegracao {
                 .andExpect(jsonPath("$.series[0].itemDivisaoId").doesNotExist())
                 .andExpect(jsonPath("$.series[0].exercicioId").value(supino.getId().toString()))
                 .andExpect(jsonPath("$.series[1].itemDivisaoId").doesNotExist());
+    }
+
+    @Test
+    void itemComExercicioTrocadoDuranteOTreinoNaoEhLigado() throws Exception {
+        String series = """
+                [{"itemDivisaoId":"%s","exercicioId":"%s","numeroSerie":1,"repeticoes":10},
+                 {"itemDivisaoId":"%s","exercicioId":"%s","numeroSerie":1,"repeticoes":10}]
+                """.formatted(itemSupino.getId(), crucifixo.getId(), itemCrucifixo.getId(), crucifixo.getId());
+
+        registrar(sessao(UUID.randomUUID(), treinoA.getId(), "Treino A", agora().minus(Duration.ofHours(1)),
+                agora().minus(Duration.ofMinutes(5)), null, series), bearerAna())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.series[0].exercicioId").value(crucifixo.getId().toString()))
+                .andExpect(jsonPath("$.series[0].itemDivisaoId").doesNotExist())
+                .andExpect(jsonPath("$.series[1].itemDivisaoId").value(itemCrucifixo.getId().toString()));
     }
 
     @Test

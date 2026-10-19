@@ -10,7 +10,7 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
 
     Optional<Sessao> findByClientId(UUID clientId);
 
-    Page<Sessao> findByAlunoIdOrderByFinalizadaEmDesc(UUID alunoId, Pageable pageable);
+    Page<Sessao> findByAlunoId(UUID alunoId, Pageable pageable);
 
     Optional<Sessao> findByIdAndAlunoId(UUID id, UUID alunoId);
 

@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,7 @@ public class SessaoService {
     private static final Logger log = LoggerFactory.getLogger(SessaoService.class);
     /** Folga para o relógio do celular adiantado em relação ao do servidor. */
     private static final Duration TOLERANCIA_RELOGIO = Duration.ofMinutes(5);
+    private static final Sort ORDEM_HISTORICO = Sort.by(Sort.Order.desc("finalizadaEm"), Sort.Order.desc("id"));
 
     public record Resultado(SessaoDTO sessao, boolean criada) {
     }
@@ -111,9 +114,13 @@ public class SessaoService {
         return SessaoDTO.de(sessao.orElseThrow(() -> new RecursoNaoEncontradoException("Sessão não encontrada.")));
     }
 
-    /** As séries de cada sessão são carregadas por página (N+1), aceitável com páginas de até 50. */
+    /**
+     * Da mais recente para a mais antiga, com o id como desempate para a paginação ser estável; o {@code sort} do
+     * cliente é ignorado. As séries de cada sessão são carregadas por página (N+1), aceitável com páginas de até 50.
+     */
     private Page<SessaoResumoDTO> resumos(UUID alunoId, Pageable pageable) {
-        return sessaoRepository.findByAlunoIdOrderByFinalizadaEmDesc(alunoId, pageable).map(SessaoResumoDTO::de);
+        Pageable ordenado = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), ORDEM_HISTORICO);
+        return sessaoRepository.findByAlunoId(alunoId, ordenado).map(SessaoResumoDTO::de);
     }
 
     private Resultado gravar(SessaoRequest req) {
@@ -124,7 +131,8 @@ public class SessaoService {
         }
         validarHorarios(req);
         Divisao divisao = divisaoDoAluno(req.divisaoId(), aluno);
-        String divisaoNome = divisao != null ? divisao.getNome() : req.divisaoNome().trim();
+        // Cópia do nome no momento do treino (spec §5), mesmo que a divisão tenha sido renomeada depois.
+        String divisaoNome = req.divisaoNome().trim();
         Map<UUID, Exercicio> exercicios = exerciciosDoPersonal(req.series(), aluno.getPersonalId());
 
         Sessao sessao = new Sessao(req.clientId(), aluno, divisao, divisaoNome, req.iniciadaEm(),
@@ -135,7 +143,7 @@ public class SessaoService {
             if (exercicio == null) {
                 throw new DadosInvalidosException("series[" + i + "].exercicioId", "Exercício inválido.");
             }
-            sessao.adicionarSerie(exercicio, itemDaDivisao(divisao, serie.itemDivisaoId()), i + 1,
+            sessao.adicionarSerie(exercicio, itemDaDivisao(divisao, serie), i + 1,
                     serie.numeroSerie(), serie.repeticoes(), serie.cargaKg());
         }
         return new Resultado(SessaoDTO.de(sessaoRepository.saveAndFlush(sessao)), true);
@@ -184,12 +192,17 @@ public class SessaoService {
                 .collect(Collectors.toMap(Exercicio::getId, Function.identity()));
     }
 
-    /** O item só é ligado se ainda existir na divisão da sessão. */
-    private static ItemDivisao itemDaDivisao(Divisao divisao, UUID itemId) {
+    /** O item só é ligado se ainda existir na divisão da sessão e ainda for do mesmo exercício da série. */
+    private static ItemDivisao itemDaDivisao(Divisao divisao, SerieRequest serie) {
+        UUID itemId = serie.itemDivisaoId();
         if (divisao == null || itemId == null) {
             return null;
         }
-        return divisao.getItens().stream().filter(i -> itemId.equals(i.getId())).findFirst().orElse(null);
+        return divisao.getItens().stream()
+                .filter(i -> itemId.equals(i.getId()))
+                .filter(i -> i.getExercicio().getId().equals(serie.exercicioId()))
+                .findFirst()
+                .orElse(null);
     }
 
     private static String textoOuNulo(String texto) {
