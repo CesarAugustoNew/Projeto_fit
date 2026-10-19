@@ -308,6 +308,25 @@ describe('Execucao', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('mostra Enviando treino… enquanto finaliza, depois que o treino sai do andamento', async () => {
+    let liberar!: (v: string) => void;
+    let local!: { emAndamento: { set(v: SessaoEmAndamento | null): void } };
+    const m = await montar(sessao(true), () => {
+      // o serviço limpa o em andamento antes de esperar o envio
+      local.emAndamento.set(null);
+      return new Promise<string>((r) => (liberar = r));
+    });
+    local = m.sessaoLocal;
+    const f = m.fixture;
+    botao(f, 'Finalizar treino')!.click();
+    await f.whenStable();
+    f.detectChanges();
+    expect(el(f).textContent).toContain('Enviando treino…');
+    liberar('enviado');
+    await f.whenStable();
+    expect(m.navigate).toHaveBeenCalledWith(['/aluno/treino'], { replaceUrl: true });
+  });
+
   it('desabilita Finalizar treino enquanto finaliza', async () => {
     let liberar!: (v: string) => void;
     const { fixture: f, sessaoLocal } = await montar(

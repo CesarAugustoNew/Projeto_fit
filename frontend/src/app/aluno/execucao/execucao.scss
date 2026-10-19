@@ -90,3 +90,9 @@
   background: var(--mat-sys-error-container, #fdd);
   color: var(--mat-sys-on-error-container, #900);
 }
+
+.mensagem {
+  text-align: center;
+  opacity: 0.7;
+  margin: 16px 0;
+}
