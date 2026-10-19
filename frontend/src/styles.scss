@@ -1,39 +1,96 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@use './theme-colors' as cores;
 
+// Paletas geradas a partir do azul "Raio" (#1F6FEB), do ciano "Faísca" (#19C2E6) e de um neutro
+// azulado, para que fundos e superfícies também puxem para o azul (gelo no claro, marinho no escuro).
+// `theme-type: color-scheme` gera os tokens com `light-dark()`: quem escolhe o modo é o
+// `color-scheme` do <html>, definido pelo TemaService (e pelo script do index.html antes do boot).
 html {
   height: 100%;
+  color-scheme: light dark;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: cores.$primary-palette,
+        tertiary: cores.$tertiary-palette,
+        theme-type: color-scheme,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: Archivo,
+        brand-family: Archivo,
+        bold-weight: 700,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
       density: 0,
     )
   );
+
+  // Tokens da marca (usados além dos do Material).
+  --fit-fundo: light-dark(#f2f6fc, #021429);
+  --fit-cartao: light-dark(#ffffff, #0b1c31);
+  --fit-borda: light-dark(#d9e3f2, #1d3049);
+  --fit-degrade: linear-gradient(120deg, #3b82f6 0%, #22c5ee 100%);
+  --fit-tinta-degrade: #04122a;
+  --fit-brilho: light-dark(rgb(59 130 246 / 0.16), rgb(59 130 246 / 0.3));
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
+  background-color: var(--fit-fundo);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
+  font-family: Archivo, system-ui, sans-serif;
   margin: 0;
   height: 100%;
+  -webkit-font-smoothing: antialiased;
 }
-/* You can add global styles to this file, and also import other style files */
+
+// Títulos com a largura expandida do Archivo: a "voz" esportiva do app.
+h1,
+h2,
+h3 {
+  font-family: Archivo, system-ui, sans-serif;
+  font-stretch: 112%;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+// Números de placar: condensados e tabulares (indicadores, cargas, contagens).
+.placar {
+  font-stretch: 75%;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+// Ação principal de uma tela: o degradê do raio. Texto escuro mantém contraste nas duas pontas.
+.botao-destaque.mat-mdc-unelevated-button:not(:disabled) {
+  background-image: var(--fit-degrade);
+  color: var(--fit-tinta-degrade);
+  font-weight: 700;
+}
+
+// Linhas clicáveis das listas.
+a.item {
+  transition: border-color 150ms ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--mat-sys-primary) 55%, var(--fit-borda));
+  }
+}
+
+a:not(.mat-mdc-button-base):focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

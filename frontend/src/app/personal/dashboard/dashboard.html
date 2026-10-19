@@ -8,15 +8,15 @@
   } @else {
     <div class="indicadores">
       <div class="indicador">
-        <span class="valor">{{ alunos().length }}</span>
+        <span class="valor placar">{{ alunos().length }}</span>
         <span class="rotulo">Alunos ativos</span>
       </div>
-      <div class="indicador">
-        <span class="valor">{{ sumiram() }}</span>
+      <div class="indicador" [class.alerta]="sumiram() > 0">
+        <span class="valor placar">{{ sumiram() }}</span>
         <span class="rotulo">Sumiram</span>
       </div>
-      <div class="indicador">
-        <span class="valor">{{ fichasVencidas() }}</span>
+      <div class="indicador" [class.alerta]="fichasVencidas() > 0">
+        <span class="valor placar">{{ fichasVencidas() }}</span>
         <span class="rotulo">Fichas vencidas</span>
       </div>
     </div>

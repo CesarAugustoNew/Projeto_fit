@@ -1,0 +1,22 @@
+<div class="tela-acesso">
+  <header class="marca">
+    <div class="emblema">
+      <span class="anel anel-externo"></span>
+      <span class="anel anel-interno"></span>
+      <app-logo-raio class="raio" [tamanho]="84" />
+    </div>
+    <p class="nome">Projeto Fit</p>
+    <p class="lema">Treinos, histórico e evolução em um só lugar</p>
+  </header>
+
+  <main class="cartao">
+    <h1>{{ titulo() }}</h1>
+    @if (subtitulo()) {
+      <p class="subtitulo">{{ subtitulo() }}</p>
+    }
+    <ng-content />
+  </main>
+
+  <!-- Por último no DOM: o conteúdo da tela vem antes na ordem de leitura e de tabulação. -->
+  <div class="topo"><app-alternar-tema /></div>
+</div>

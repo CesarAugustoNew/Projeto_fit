@@ -1,13 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { rotaInicial } from '../../core/usuario/usuario.model';
 import { UsuarioService } from '../../core/usuario/usuario.service';
+import { TelaAcesso } from '../tela-acesso/tela-acesso';
 
 @Component({
   selector: 'app-definir-senha',
@@ -15,12 +16,12 @@ import { UsuarioService } from '../../core/usuario/usuario.service';
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
+    TelaAcesso,
   ],
   templateUrl: './definir-senha.html',
-  styleUrl: './definir-senha.scss',
 })
 export class DefinirSenha {
   private readonly auth = inject(AuthService);

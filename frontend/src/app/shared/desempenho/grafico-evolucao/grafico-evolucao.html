@@ -13,7 +13,7 @@
     <p class="vazio">Exercício sem carga registrada. Veja o volume ou o histórico de treinos.</p>
   } @else {
     <div class="grafico">
-      <canvas baseChart type="line" [data]="dados()" [options]="opcoes"></canvas>
+      <canvas baseChart type="line" [data]="dados()" [options]="opcoes()"></canvas>
     </div>
   }
 }

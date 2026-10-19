@@ -53,7 +53,7 @@ describe('área do personal (configuração real do router)', () => {
     });
   });
 
-  const titulo = (el: HTMLElement) => el.querySelector('.titulo')?.textContent?.trim();
+  const titulo = (el: HTMLElement) => el.querySelector('.marca .nome')?.textContent?.trim();
 
   it('Shell recebe itens e título de data da rota', async () => {
     const harness = await RouterTestingHarness.create('/personal/dashboard');

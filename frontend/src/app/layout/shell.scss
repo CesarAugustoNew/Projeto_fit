@@ -3,34 +3,60 @@
   height: 100dvh;
 }
 
-.celular,
-.desktop {
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .nome {
+    font-size: 1.125rem;
+    font-stretch: 115%;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+}
+
+.conteudo {
+  background: var(--fit-fundo);
+}
+
+/* ---------- Celular ---------- */
+
+.celular {
   display: flex;
   flex-direction: column;
   height: 100%;
+
+  .conteudo {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+    min-height: 0;
+  }
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 0 4px 0 16px;
+  padding-top: env(safe-area-inset-top);
+  background: var(--fit-cartao);
+  border-bottom: 1px solid var(--fit-borda);
 }
 
 .espaco {
   flex: 1 1 auto;
 }
 
-.container {
-  flex: 1 1 auto;
-}
-
-.conteudo {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: 16px;
-  min-height: 0;
-}
-
 /* A barra inferior e um item do flex (nao sobrepoe o conteudo). */
 .nav-inferior {
   display: flex;
   flex: 0 0 auto;
-  background: var(--mat-sys-surface-container);
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: var(--fit-cartao);
+  border-top: 1px solid var(--fit-borda);
   padding-bottom: env(safe-area-inset-bottom);
 
   a {
@@ -38,37 +64,137 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 8px 4px;
-    min-height: 48px;
+    gap: 4px;
+    padding: 8px 4px 10px;
+    min-height: 56px;
+    box-sizing: border-box;
     color: var(--mat-sys-on-surface-variant);
     text-decoration: none;
     font: var(--mat-sys-label-medium);
 
     &.ativo {
-      color: var(--mat-sys-primary);
+      color: var(--mat-sys-on-surface);
+      font-weight: 700;
+
+      .pilula {
+        background: var(--fit-brilho);
+        color: var(--mat-sys-primary);
+      }
     }
+  }
+}
+
+.pilula {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background-color 150ms ease;
+}
+
+/* ---------- Desktop ---------- */
+
+.desktop {
+  height: 100%;
+  background: var(--fit-fundo);
+
+  .conteudo {
+    padding: 24px 32px;
+  }
+}
+
+.lateral {
+  width: 248px;
+  border-right: 1px solid var(--fit-borda);
+  border-radius: 0;
+  background: var(--fit-cartao);
+}
+
+.lateral-interna {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 12px 16px;
+  box-sizing: border-box;
+
+  .marca {
+    padding: 0 8px 24px;
   }
 }
 
 .nav-lateral {
   display: flex;
   flex-direction: column;
-  padding: 8px;
-  width: 220px;
+  gap: 4px;
+  flex: 1 1 auto;
 
   a {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
-    border-radius: 28px;
-    color: var(--mat-sys-on-surface);
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    color: var(--mat-sys-on-surface-variant);
     text-decoration: none;
+    font: var(--mat-sys-label-large);
 
+    &:hover {
+      background: var(--fit-brilho);
+      color: var(--mat-sys-on-surface);
+    }
+
+    // Item ativo: fundo azul suave e a faixa do degradê do raio à esquerda.
     &.ativo {
-      background: var(--mat-sys-secondary-container);
-      color: var(--mat-sys-on-secondary-container);
+      background: var(--fit-brilho);
+      color: var(--mat-sys-primary);
+      font-weight: 700;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 3px;
+        border-radius: 3px;
+        background: var(--fit-degrade);
+      }
+    }
+  }
+}
+
+.rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fit-borda);
+
+  .sair {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fit-brilho);
+      color: var(--mat-sys-on-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
     }
   }
 }

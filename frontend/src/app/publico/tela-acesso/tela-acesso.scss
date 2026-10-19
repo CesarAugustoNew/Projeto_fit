@@ -1,0 +1,193 @@
+app-tela-acesso {
+  display: block;
+  min-height: 100%;
+}
+
+.tela-acesso {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-height: 100dvh;
+  padding: 48px 16px 32px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(640px 420px at 50% 12%, var(--fit-brilho), transparent 70%),
+    var(--fit-fundo);
+
+  .topo {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  .marca {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .emblema {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 144px;
+    height: 144px;
+    margin-bottom: 8px;
+  }
+
+  .anel {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 30%, transparent);
+  }
+
+  .anel-externo {
+    inset: 0;
+  }
+
+  .anel-interno {
+    inset: 20px;
+    border-color: color-mix(in srgb, var(--mat-sys-primary) 45%, transparent);
+    background: radial-gradient(circle, var(--fit-brilho), transparent 72%);
+  }
+
+  .raio {
+    position: relative;
+    filter: drop-shadow(0 6px 14px rgb(47 127 232 / 0.35));
+  }
+
+  .nome {
+    margin: 0;
+    font-size: 2rem;
+    line-height: 1.1;
+    font-stretch: 118%;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .lema {
+    margin: 6px 0 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .cartao {
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    box-sizing: border-box;
+    border: 1px solid var(--fit-borda);
+    border-radius: 20px;
+    background: var(--fit-cartao);
+    box-shadow: 0 18px 40px -20px light-dark(rgb(20 50 110 / 0.28), rgb(0 0 0 / 0.6));
+
+    h1 {
+      margin: 0;
+      font-size: 1.375rem;
+    }
+  }
+
+  .subtitulo {
+    margin: 4px 0 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 20px;
+    --mat-form-field-outlined-container-shape: 12px;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  mat-icon[matPrefix] {
+    margin: 0 4px 0 12px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .esqueci {
+    align-self: flex-end;
+    margin: -8px 0 12px;
+    padding: 4px 2px;
+    color: var(--mat-sys-primary);
+    font: var(--mat-sys-label-large);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  button[type='submit'],
+  .acoes button {
+    height: 48px;
+    --mat-button-filled-container-shape: 12px;
+  }
+
+  .erro,
+  .sucesso {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .erro {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+
+  .sucesso {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+
+  .links {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .acoes {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+  }
+}
+
+// Um único momento de movimento: o raio "carrega" ao abrir a tela.
+@media (prefers-reduced-motion: no-preference) {
+  .tela-acesso {
+    .anel {
+      animation: carga-anel 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .anel-externo {
+      animation-delay: 120ms;
+    }
+
+    .raio {
+      animation: carga-raio 700ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+    }
+  }
+}
+
+@keyframes carga-anel {
+  from {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+}
+
+@keyframes carga-raio {
+  from {
+    transform: scale(0.7) rotate(-8deg);
+    opacity: 0;
+  }
+}

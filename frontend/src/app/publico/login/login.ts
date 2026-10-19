@@ -2,13 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { rotaInicial } from '../../core/usuario/usuario.model';
 import { UsuarioService } from '../../core/usuario/usuario.service';
+import { TelaAcesso } from '../tela-acesso/tela-acesso';
 
 @Component({
   selector: 'app-login',
@@ -16,12 +17,12 @@ import { UsuarioService } from '../../core/usuario/usuario.service';
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
+    TelaAcesso,
   ],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
 })
 export class Login implements OnInit {
   private readonly auth = inject(AuthService);
@@ -34,6 +35,7 @@ export class Login implements OnInit {
   });
   protected readonly erro = signal<string | null>(null);
   protected readonly enviando = signal(false);
+  protected readonly senhaVisivel = signal(false);
 
   async ngOnInit(): Promise<void> {
     try {

@@ -1,13 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TelaAcesso } from '../tela-acesso/tela-acesso';
 
 @Component({
   selector: 'app-indisponivel',
-  imports: [MatButtonModule, MatCardModule],
+  imports: [MatButtonModule, TelaAcesso],
   templateUrl: './indisponivel.html',
-  styleUrl: './indisponivel.scss',
 })
 export class Indisponivel {
   private readonly router = inject(Router);

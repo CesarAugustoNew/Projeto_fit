@@ -1,41 +1,53 @@
-<ng-template #barra>
-  <mat-toolbar color="primary">
-    <span class="titulo">{{ titulo() }}</span>
-    <span class="espaco"></span>
-    <button mat-icon-button class="sair" type="button" aria-label="Sair" (click)="sair()">
-      <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-    </button>
-  </mat-toolbar>
-</ng-template>
-
 @if (celular()) {
   <div class="celular">
-    <ng-container *ngTemplateOutlet="barra" />
+    <header class="barra">
+      <div class="marca">
+        <app-logo-raio [tamanho]="28" />
+        <span class="nome">{{ titulo() }}</span>
+      </div>
+      <span class="espaco"></span>
+      <app-alternar-tema />
+      <button mat-icon-button class="sair" type="button" aria-label="Sair" (click)="sair()">
+        <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+      </button>
+    </header>
     <main class="conteudo"><router-outlet /></main>
     <nav class="nav-inferior" aria-label="Navegação principal">
       @for (item of itens(); track item.rota) {
-        <a [routerLink]="item.rota" routerLinkActive="ativo">
-          <mat-icon fontSet="material-symbols-outlined">{{ item.icone }}</mat-icon>
+        <a [routerLink]="item.rota" routerLinkActive="ativo" ariaCurrentWhenActive="page">
+          <span class="pilula">
+            <mat-icon fontSet="material-symbols-outlined">{{ item.icone }}</mat-icon>
+          </span>
           <span>{{ item.rotulo }}</span>
         </a>
       }
     </nav>
   </div>
 } @else {
-  <div class="desktop">
-    <ng-container *ngTemplateOutlet="barra" />
-    <mat-sidenav-container class="container">
-      <mat-sidenav mode="side" opened>
+  <mat-sidenav-container class="desktop">
+    <mat-sidenav mode="side" opened class="lateral">
+      <div class="lateral-interna">
+        <div class="marca">
+          <app-logo-raio [tamanho]="34" />
+          <span class="nome">{{ titulo() }}</span>
+        </div>
         <nav class="nav-lateral" aria-label="Navegação principal">
           @for (item of itens(); track item.rota) {
-            <a [routerLink]="item.rota" routerLinkActive="ativo">
+            <a [routerLink]="item.rota" routerLinkActive="ativo" ariaCurrentWhenActive="page">
               <mat-icon fontSet="material-symbols-outlined">{{ item.icone }}</mat-icon>
               <span>{{ item.rotulo }}</span>
             </a>
           }
         </nav>
-      </mat-sidenav>
-      <mat-sidenav-content class="conteudo"><router-outlet /></mat-sidenav-content>
-    </mat-sidenav-container>
-  </div>
+        <div class="rodape">
+          <app-alternar-tema comTexto />
+          <button class="sair" type="button" (click)="sair()">
+            <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+            <span>Sair</span>
+          </button>
+        </div>
+      </div>
+    </mat-sidenav>
+    <mat-sidenav-content class="conteudo"><router-outlet /></mat-sidenav-content>
+  </mat-sidenav-container>
 }
