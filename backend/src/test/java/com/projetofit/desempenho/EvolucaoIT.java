@@ -111,6 +111,33 @@ class EvolucaoIT extends TesteIntegracao {
     }
 
     @Test
+    void cargasDiferentesNaMesmaSessaoUsamMaximoESomaVolume() throws Exception {
+        Sessao sessao = gravarSessao(ana, LocalDate.now(clock).minusDays(1), supino, "40", 10, 1);
+        sessao.adicionarSerie(supino, null, 2, 2, 10, new BigDecimal("42.5"));
+        sessaoRepository.saveAndFlush(sessao);
+
+        mvc.perform(get("/api/alunos/" + ana.getId() + "/desempenho/evolucao?exercicioId=" + supino.getId())
+                        .header("Authorization", bearerPersonal()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].cargaMaxima").value(42.5))
+                .andExpect(jsonPath("$[0].volume").value(825.0));
+    }
+
+    @Test
+    void sessaoMistaComSeriesSemCargaContaVolumeSoDasComCarga() throws Exception {
+        Sessao sessao = gravarSessao(ana, LocalDate.now(clock).minusDays(1), supino, "40", 10, 1);
+        sessao.adicionarSerie(supino, null, 2, 2, 10, null);
+        sessaoRepository.saveAndFlush(sessao);
+
+        mvc.perform(get("/api/alunos/" + ana.getId() + "/desempenho/evolucao?exercicioId=" + supino.getId())
+                        .header("Authorization", bearerPersonal()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].cargaMaxima").value(40.0))
+                .andExpect(jsonPath("$[0].volume").value(400.0));
+    }
+
+    @Test
     void periodoPadraoSaoSeisMeses() throws Exception {
         LocalDate hoje = LocalDate.now(clock);
         gravarSessao(ana, hoje.minusMonths(7), supino, "40", 10, 1);

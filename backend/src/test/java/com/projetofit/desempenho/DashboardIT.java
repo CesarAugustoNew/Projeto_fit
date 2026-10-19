@@ -153,6 +153,25 @@ class DashboardIT extends TesteIntegracao {
     }
 
     @Test
+    void fichaEncerradaNaSemanaAindaDefinePlanejadoMasNaoEhFichaAtiva() throws Exception {
+        Aluno ana = gravarAluno("Ana", PERSONAL_ID, StatusAluno.ATIVO);
+        Ficha ficha = gravarFicha(ana, 4);
+        ficha.encerrar();
+        fichaRepository.saveAndFlush(ficha);
+        Instant inicioDaSemana = LocalDate.now(clock).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay(clock.getZone()).toInstant();
+        jdbc.update("update ficha set criado_em = ?, encerrada_em = ? where id = ?",
+                Timestamp.from(inicioDaSemana.minus(3, ChronoUnit.DAYS)),
+                Timestamp.from(inicioDaSemana.plusSeconds(60)), ficha.getId());
+
+        mvc.perform(get("/api/dashboard").header("Authorization", bearerPersonal()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].planejadoSemana").value(4))
+                .andExpect(jsonPath("$[0].fichaAtivaId").value(nullValue()))
+                .andExpect(jsonPath("$[0].fichaVencida").value(false));
+    }
+
+    @Test
     void soAlunosAtivosDoPersonal() throws Exception {
         gravarAluno("Ana", PERSONAL_ID, StatusAluno.ATIVO);
         gravarAluno("Convidado", PERSONAL_ID, StatusAluno.CONVIDADO);

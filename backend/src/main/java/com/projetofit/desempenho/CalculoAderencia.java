@@ -25,6 +25,18 @@ public final class CalculoAderencia {
         return data.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
+    /**
+     * Frequência da ficha mais recente (por início) cujo período ativo cruza a semana {@code [de, ate)};
+     * 0 se nenhuma.
+     */
+    public static int planejadoNaSemana(List<PeriodoFicha> fichas, Instant de, Instant ate) {
+        return fichas.stream()
+                .filter(f -> f.ativaDesde().isBefore(ate) && (f.ativaAte() == null || !f.ativaAte().isBefore(de)))
+                .max(Comparator.comparing(PeriodoFicha::ativaDesde))
+                .map(PeriodoFicha::frequenciaSemanal)
+                .orElse(0);
+    }
+
     public static List<SemanaAderenciaDTO> calcular(LocalDate hoje, int semanas, ZoneId zona,
                                                     List<Instant> finalizacoes, List<PeriodoFicha> fichas) {
         LocalDate segundaAtual = segundaDaSemana(hoje);
@@ -37,11 +49,7 @@ public final class CalculoAderencia {
             int realizados = (int) finalizacoes.stream()
                     .filter(f -> !f.isBefore(de) && f.isBefore(ate))
                     .count();
-            int planejado = fichas.stream()
-                    .filter(f -> f.ativaDesde().isBefore(ate) && (f.ativaAte() == null || !f.ativaAte().isBefore(de)))
-                    .max(Comparator.comparing(PeriodoFicha::ativaDesde))
-                    .map(PeriodoFicha::frequenciaSemanal)
-                    .orElse(0);
+            int planejado = planejadoNaSemana(fichas, de, ate);
             Integer percentual = planejado == 0 ? null
                     : (int) Math.min(100, Math.round(100.0 * realizados / planejado));
             resultado.add(new SemanaAderenciaDTO(inicio, proxima.minusDays(1), realizados, planejado, percentual));
