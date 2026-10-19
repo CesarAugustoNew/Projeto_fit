@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal, signal } from '@angular/core';
+import { TimeoutError } from 'rxjs';
 import { UsuarioService } from '../../core/usuario/usuario.service';
 import { Usuario } from '../../core/usuario/usuario.model';
 import { Divisao, Ficha, ItemDivisao } from '../../personal/fichas/ficha.model';
@@ -512,6 +513,76 @@ describe('SessaoLocalService', () => {
     expect(servico.pendentes()).toBe(0);
   });
 
+  it.each([401, 403])(
+    'finalizar devolve pendente quando o envio recebe %i e o usuário é limpo',
+    async (status) => {
+      registrar.mockImplementation(async () => {
+        // o erroInterceptor chama usuario.limpar() antes de o erro chegar aqui
+        usuarioAtual.set(null);
+        throw erroHttp(status);
+      });
+      const servico = criar();
+      const sessao = servico.iniciar(ficha, divisao);
+      servico.atualizarSerie(0, 0, { concluida: true });
+
+      expect(await servico.finalizar()).toBe('pendente');
+
+      expect(pendentesNoStorage().map((s) => s.clientId)).toEqual([sessao.clientId]);
+      expect(localStorage.getItem('sessoes-com-erro:u1')).toBeNull();
+    },
+  );
+
+  it('tempo esgotado (erro não-HTTP) mantém na fila e devolve pendente', async () => {
+    registrar.mockRejectedValue(new TimeoutError());
+    const servico = criar();
+    const sessao = servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+
+    expect(await servico.finalizar()).toBe('pendente');
+
+    expect(pendentesNoStorage().map((s) => s.clientId)).toEqual([sessao.clientId]);
+    expect(servico.comErro()).toEqual([]);
+  });
+
+  it('tentarDeNovoComErro reenvia o treino recusado com o mesmo clientId', async () => {
+    registrar.mockRejectedValueOnce(erroHttp(400, { detail: 'Recusado.' }));
+    const servico = criar();
+    const sessao = servico.iniciar(ficha, divisao);
+    servico.atualizarSerie(0, 0, { concluida: true });
+    expect(await servico.finalizar()).toBe('recusado');
+    registrar.mockResolvedValueOnce(sessaoSalva);
+
+    await servico.tentarDeNovoComErro(0);
+
+    expect(registrar).toHaveBeenCalledTimes(2);
+    expect(registrar.mock.calls[1][0].clientId).toBe(sessao.clientId);
+    expect(servico.comErro()).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('sessoes-com-erro:u1')!)).toEqual([]);
+    expect(servico.pendentes()).toBe(0);
+  });
+
+  it('tentarDeNovoComErro sem conexão move o item para o fim da fila', async () => {
+    registrar.mockRejectedValue(erroHttp(0));
+    const servico = criar();
+    const primeiro = servico.iniciar(ficha, divisao).clientId;
+    servico.atualizarSerie(0, 0, { concluida: true });
+    await servico.finalizar();
+    registrar.mockReset();
+    registrar.mockRejectedValueOnce(erroHttp(400, { detail: 'Recusado.' }));
+    await servico.enviarPendentes();
+    expect(servico.comErro().length).toBe(1);
+    registrar.mockRejectedValue(erroHttp(0));
+    const segundo = servico.iniciar(ficha, divisao).clientId;
+    servico.atualizarSerie(0, 0, { concluida: true });
+    await servico.finalizar();
+
+    await servico.tentarDeNovoComErro(0);
+
+    expect(servico.comErro()).toEqual([]);
+    expect(pendentesNoStorage().map((s) => s.clientId)).toEqual([segundo, primeiro]);
+    expect(servico.pendentes()).toBe(2);
+  });
+
   it('descartarComErro remove o item', async () => {
     registrar.mockRejectedValue(erroHttp(400, { detail: 'Recusado.' }));
     const servico = criar();
@@ -588,6 +659,21 @@ describe('SessaoLocalService', () => {
     const series = servico.emAndamento()!.exercicios[0].series;
     expect(series.length).toBe(50);
     expect(series.at(-1)!.numero).toBe(50);
+  });
+
+  it('adicionarSerie não passa de 400 séries na sessão', () => {
+    const muitos: Divisao = {
+      ...divisao,
+      itens: Array.from({ length: 10 }, (_, i) => item(`i${i}`)),
+    };
+    const servico = criar();
+    servico.iniciar(ficha, muitos);
+    for (let ex = 0; ex < 10; ex++) for (let i = 0; i < 60; i++) servico.adicionarSerie(ex);
+
+    const total = servico
+      .emAndamento()!
+      .exercicios.reduce((soma, e) => soma + e.series.length, 0);
+    expect(total).toBe(400);
   });
 
   it('itens inválidos no storage são ignorados sem bloquear os demais', async () => {

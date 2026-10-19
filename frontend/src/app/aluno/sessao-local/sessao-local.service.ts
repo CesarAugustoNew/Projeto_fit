@@ -17,6 +17,8 @@ const ERRO_SALVAR = 'Não foi possível salvar o treino no aparelho. Libere espa
 const RECUSA_PADRAO = 'O servidor recusou este treino.';
 /** Limite de `numeroSerie` aceito pelo back. */
 const MAX_SERIES = 50;
+/** Limite de séries por sessão aceito pelo back. */
+const MAX_SERIES_SESSAO = 400;
 
 /** Estado local de um usuário; `usuarioId` null = sem usuário, só em memória. */
 interface EstadoLocal {
@@ -107,10 +109,14 @@ export class SessaoLocalService {
     }));
   }
 
-  /** Nova série copiando carga e repetições da última (até {@link MAX_SERIES}). */
+  /**
+   * Nova série copiando carga e repetições da última (até {@link MAX_SERIES} no exercício e
+   * {@link MAX_SERIES_SESSAO} na sessão).
+   */
   adicionarSerie(exercicioIndex: number): void {
-    if ((this.estado().emAndamento?.exercicios[exercicioIndex]?.series.length ?? 0) >= MAX_SERIES)
-      return;
+    const exercicios = this.estado().emAndamento?.exercicios ?? [];
+    if ((exercicios[exercicioIndex]?.series.length ?? 0) >= MAX_SERIES) return;
+    if (exercicios.reduce((total, e) => total + e.series.length, 0) >= MAX_SERIES_SESSAO) return;
     this.alterarExercicio(exercicioIndex, (exercicio) => {
       const ultima = exercicio.series.at(-1);
       const nova: SerieEmAndamento = {
@@ -133,7 +139,7 @@ export class SessaoLocalService {
   }
 
   async finalizar(): Promise<'enviado' | 'pendente' | 'recusado'> {
-    const atual = this.estado().emAndamento;
+    const { usuarioId, emAndamento: atual } = this.estado();
     const series = atual ? seriesConcluidas(atual) : [];
     if (!atual || series.length === 0) throw new Error(ERRO_NENHUMA_SERIE);
 
@@ -152,6 +158,8 @@ export class SessaoLocalService {
     this.gravar('emAndamento', null);
 
     await this.enviarPendentes();
+    // 401/403 limpam o usuário durante o envio: o treino segue na fila dele, sem ter sido enviado.
+    if (this.estado().usuarioId !== usuarioId) return 'pendente';
     const { pendentes, comErro } = this.estado();
     if (pendentes.some((s) => s.clientId === req.clientId)) return 'pendente';
     if (comErro.some((e) => e.sessao.clientId === req.clientId)) return 'recusado';
@@ -162,6 +170,19 @@ export class SessaoLocalService {
   enviarPendentes(): Promise<void> {
     this.envio ??= this.executarEnvio();
     return this.envio;
+  }
+
+  /** Devolve um treino recusado para o fim da fila e tenta enviar de novo (mesmo `clientId`). */
+  async tentarDeNovoComErro(index: number): Promise<void> {
+    const item = this.estado().comErro[index];
+    if (!item) return;
+    // Primeiro grava na fila: se falhar, o treino continua na lista de recusados (nada se perde).
+    if (!this.gravarSeguro('pendentes', [...this.estado().pendentes, item.sessao])) return;
+    this.gravar(
+      'comErro',
+      this.estado().comErro.filter((_, i) => i !== index),
+    );
+    await this.enviarPendentes();
   }
 
   descartarComErro(index: number): void {
