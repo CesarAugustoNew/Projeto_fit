@@ -1,10 +1,14 @@
 package com.projetofit.sessao;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
 
@@ -18,4 +22,9 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
 
     /** Última sessão do aluno cuja divisão ainda existe e pertence à ficha. */
     Optional<Sessao> findFirstByAlunoIdAndDivisaoFichaIdOrderByFinalizadaEmDesc(UUID alunoId, UUID fichaId);
+
+    @Query("select s.finalizadaEm from Sessao s where s.aluno.id = :alunoId "
+            + "and s.finalizadaEm >= :de and s.finalizadaEm < :ate")
+    List<Instant> findFinalizadasEmEntre(@Param("alunoId") UUID alunoId, @Param("de") Instant de,
+                                         @Param("ate") Instant ate);
 }

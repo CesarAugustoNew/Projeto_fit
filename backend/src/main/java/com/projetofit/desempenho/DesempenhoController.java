@@ -1,5 +1,7 @@
 package com.projetofit.desempenho;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -48,5 +50,20 @@ public class DesempenhoController {
     @PreAuthorize("hasRole('ALUNO')")
     public List<ExercicioExecutadoDTO> meusExercicios() {
         return service.exercicios(service.alunoLogado());
+    }
+
+    @GetMapping("/api/alunos/{alunoId}/desempenho/aderencia")
+    @PreAuthorize("hasRole('PERSONAL')")
+    public List<SemanaAderenciaDTO> aderenciaDoAluno(
+            @PathVariable UUID alunoId,
+            @RequestParam(defaultValue = "8") @Min(1) @Max(26) int semanas) {
+        return service.aderencia(service.alunoDoPersonal(alunoId), semanas);
+    }
+
+    @GetMapping("/api/me/desempenho/aderencia")
+    @PreAuthorize("hasRole('ALUNO')")
+    public List<SemanaAderenciaDTO> minhaAderencia(
+            @RequestParam(defaultValue = "8") @Min(1) @Max(26) int semanas) {
+        return service.aderencia(service.alunoLogado(), semanas);
     }
 }
