@@ -9,6 +9,7 @@ import com.projetofit.TesteIntegracao;
 import com.projetofit.aluno.Aluno;
 import com.projetofit.aluno.AlunoRepository;
 import com.projetofit.aluno.StatusAluno;
+import com.projetofit.exercicio.ExercicioRepository;
 import com.projetofit.ficha.Ficha;
 import com.projetofit.ficha.FichaRepository;
 import com.projetofit.seguranca.TokenDeTeste;
@@ -47,6 +48,9 @@ class AderenciaIT extends TesteIntegracao {
     FichaRepository fichaRepository;
 
     @Autowired
+    ExercicioRepository exercicioRepository;
+
+    @Autowired
     SessaoRepository sessaoRepository;
 
     @Autowired
@@ -62,6 +66,7 @@ class AderenciaIT extends TesteIntegracao {
     void preparar() {
         sessaoRepository.deleteAll();
         fichaRepository.deleteAll();
+        exercicioRepository.deleteAll();
         alunoRepository.deleteAll();
         usuarioRepository.deleteAll();
         usuarioRepository.save(new Usuario(PERSONAL_ID, "personal", "personal@teste.com", Papel.PERSONAL));
