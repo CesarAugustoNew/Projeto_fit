@@ -26,9 +26,10 @@ export class Dashboard {
   }
 
   protected treinosSemana(a: DashboardAluno): string {
-    if (a.planejadoSemana > 0) return `${a.realizadosSemana}/${a.planejadoSemana} treinos nesta semana`;
+    const semFicha = a.fichaAtivaId === null ? ' · Sem ficha' : '';
+    if (a.planejadoSemana > 0) return `${a.realizadosSemana}/${a.planejadoSemana} treinos nesta semana${semFicha}`;
     const treinos = a.realizadosSemana === 1 ? '1 treino' : `${a.realizadosSemana} treinos`;
-    return `${treinos} nesta semana · Sem ficha`;
+    return `${treinos} nesta semana${semFicha}`;
   }
 
   protected ultimoTreino(dias: number | null): string {

@@ -8,3 +8,6 @@
 <div class="grafico">
   <canvas baseChart type="bar" [data]="dados()" [options]="opcoes"></canvas>
 </div>
+@if (temSemanaSemFicha()) {
+  <p class="legenda">Semanas sem barra: sem ficha ativa.</p>
+}

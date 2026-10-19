@@ -35,6 +35,22 @@ describe('GraficoEvolucao', () => {
     expect(el.querySelector('canvas')).toBeNull();
   });
 
+  it('exercício sem carga no modo Carga mostra mensagem e Volume segue disponível', async () => {
+    const fixture = await montar([
+      { data: '2026-10-05', sessaoId: 's1', cargaMaxima: null, volume: 0 },
+      { data: '2026-10-12', sessaoId: 's2', cargaMaxima: null, volume: 0 },
+    ]);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Exercício sem carga registrada. Veja o volume ou o histórico de treinos.');
+    expect(el.querySelector('canvas')).toBeNull();
+
+    const botoes = Array.from(el.querySelectorAll('mat-button-toggle button')) as HTMLButtonElement[];
+    botoes.find((b) => b.textContent?.includes('Volume'))!.click();
+    await fixture.whenStable();
+    expect(el.textContent).not.toContain('Exercício sem carga registrada');
+    expect(el.querySelector('canvas')).not.toBeNull();
+  });
+
   it('toggle Volume troca a medida', async () => {
     const fixture = await montar(pontos);
     const el = fixture.nativeElement as HTMLElement;

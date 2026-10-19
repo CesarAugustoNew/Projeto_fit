@@ -17,6 +17,9 @@ export class GraficoEvolucao {
 
   protected readonly medida = signal<MedidaEvolucao>('carga');
   protected readonly dados = computed(() => dadosEvolucao(this.pontos(), this.medida()));
+  protected readonly semCarga = computed(
+    () => this.medida() === 'carga' && this.pontos().every((p) => p.cargaMaxima === null),
+  );
   protected readonly opcoes: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,

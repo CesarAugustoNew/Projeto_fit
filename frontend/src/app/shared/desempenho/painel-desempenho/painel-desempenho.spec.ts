@@ -75,6 +75,27 @@ describe('PainelDesempenho', () => {
     expect(svc.evolucao).toHaveBeenLastCalledWith(alvo, 'e2');
   });
 
+  it('manter Volume ao trocar de exercício', async () => {
+    const f = await montar();
+    const el = f.nativeElement as HTMLElement;
+    const clicarVolume = async () => {
+      const botoes = Array.from(el.querySelectorAll('mat-button-toggle button')) as HTMLButtonElement[];
+      botoes.find((b) => b.textContent?.includes('Volume'))!.click();
+      await estabilizar(f);
+    };
+    await clicarVolume();
+    const volumeAtivo = () => el.querySelector('mat-button-toggle.mat-button-toggle-checked')?.textContent?.trim();
+    expect(volumeAtivo()).toBe('Volume');
+    let resolver!: (p: PontoEvolucao[]) => void;
+    svc.evolucao.mockReturnValueOnce(new Promise((r) => (resolver = r)));
+    (f.componentInstance as unknown as { trocarExercicio(id: string): void }).trocarExercicio('e2');
+    await estabilizar(f); // ainda carregando
+    expect(svc.evolucao).toHaveBeenLastCalledWith(alvo, 'e2');
+    resolver(pontos(50));
+    await estabilizar(f);
+    expect(volumeAtivo()).toBe('Volume');
+  });
+
   it('descarta resposta atrasada ao trocar de exercício', async () => {
     const f = await montar();
     const comp = f.componentInstance as unknown as {

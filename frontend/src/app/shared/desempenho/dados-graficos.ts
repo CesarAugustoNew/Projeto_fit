@@ -27,6 +27,6 @@ export function dadosEvolucao(pontos: PontoEvolucao[], medida: MedidaEvolucao): 
 export function dadosAderencia(semanas: SemanaAderencia[]): ChartData<'bar'> {
   return {
     labels: semanas.map((s) => rotuloData(s.inicio)),
-    datasets: [{ label: 'Aderência (%)', data: semanas.map((s) => s.percentual ?? 0) }],
+    datasets: [{ label: 'Aderência (%)', data: semanas.map((s) => s.percentual) }],
   };
 }

@@ -2,6 +2,10 @@
   display: block;
 }
 
+:host([hidden]) {
+  display: none;
+}
+
 .grafico {
   position: relative;
   height: 240px;

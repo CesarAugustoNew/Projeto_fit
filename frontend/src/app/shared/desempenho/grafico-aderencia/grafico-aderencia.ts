@@ -16,6 +16,7 @@ export class GraficoAderencia {
 
   protected readonly dados = computed(() => dadosAderencia(this.semanas()));
   protected readonly media = computed(() => aderenciaMedia(this.semanas()));
+  protected readonly temSemanaSemFicha = computed(() => this.semanas().some((s) => s.percentual === null));
   protected readonly opcoes: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,

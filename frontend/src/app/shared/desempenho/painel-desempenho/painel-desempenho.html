@@ -27,10 +27,12 @@
 
         @if (carregandoEvolucao()) {
           <p class="mensagem">Carregando…</p>
-        } @else if (erroEvolucao()) {
+        }
+        @if (erroEvolucao() && !carregandoEvolucao()) {
           <p class="mensagem" role="alert">Não foi possível carregar o desempenho.</p>
         } @else {
-          <app-grafico-evolucao [pontos]="pontos()" />
+          <!-- Fica montado durante o carregamento para manter a medida (Carga/Volume) escolhida. -->
+          <app-grafico-evolucao [hidden]="carregandoEvolucao()" [pontos]="pontos()" />
         }
       }
     </section>

@@ -80,6 +80,13 @@ describe('Dashboard', () => {
     expect(texto(f)).toContain('2 treinos nesta semana · Sem ficha');
   });
 
+  it('sem ficha ativa mas com planejado da semana mostra realizados/planejado', async () => {
+    const f = await criar([
+      aluno({ planejadoSemana: 3, realizadosSemana: 2, fichaAtivaId: null }),
+    ]);
+    expect(texto(f)).toContain('2/3 treinos nesta semana · Sem ficha');
+  });
+
   it('etiquetas Sumiu e Ficha vencida', async () => {
     const f = await criar([aluno({ sumiu: true, fichaVencida: true })]);
     const etiquetas = Array.from(f.nativeElement.querySelectorAll('.etiqueta')).map((e) => (e as HTMLElement).textContent!.trim());

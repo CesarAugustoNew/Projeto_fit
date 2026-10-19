@@ -36,10 +36,10 @@ describe('dados-graficos', () => {
     expect(dados.datasets[0].label).toBe('Volume (kg)');
   });
 
-  it('dadosAderencia usa percentual e nulo vira 0', () => {
+  it('dadosAderencia usa percentual e nulo fica sem barra (null)', () => {
     const dados = dadosAderencia([semana('2026-10-05', 100), semana('2026-10-12', null), semana('2026-10-19', 50)]);
     expect(dados.labels).toEqual(['05/10', '12/10', '19/10']);
-    expect(dados.datasets[0].data).toEqual([100, 0, 50]);
+    expect(dados.datasets[0].data).toEqual([100, null, 50]);
     expect(dados.datasets[0].label).toBe('Aderência (%)');
   });
 });
