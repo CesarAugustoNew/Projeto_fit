@@ -1,0 +1,15 @@
+@if (pontos().length === 0) {
+  <p class="vazio">Ainda não há treinos com este exercício no período.</p>
+} @else {
+  <mat-button-toggle-group
+    aria-label="Medida do gráfico"
+    [value]="medida()"
+    (change)="medida.set($event.value)"
+  >
+    <mat-button-toggle value="carga">Carga</mat-button-toggle>
+    <mat-button-toggle value="volume">Volume</mat-button-toggle>
+  </mat-button-toggle-group>
+  <div class="grafico">
+    <canvas baseChart type="line" [data]="dados()" [options]="opcoes"></canvas>
+  </div>
+}

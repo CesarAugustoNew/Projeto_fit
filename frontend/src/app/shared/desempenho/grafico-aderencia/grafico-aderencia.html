@@ -1,0 +1,10 @@
+<p class="media">
+  @if (media() !== null) {
+    Aderência média: {{ media() }}%
+  } @else {
+    Sem ficha no período
+  }
+</p>
+<div class="grafico">
+  <canvas baseChart type="bar" [data]="dados()" [options]="opcoes"></canvas>
+</div>
