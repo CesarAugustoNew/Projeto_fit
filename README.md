@@ -1,54 +1,94 @@
+<div align="center">
+
+<img src="frontend/public/favicon.svg" alt="Logo do Projeto Fit: um raio azul" width="88" />
+
 # Projeto Fit
 
-Aplicativo web para personal trainers acompanharem seus alunos: cadastro e convite de alunos, catálogo de exercícios, fichas de treino, execução de treinos pelo aluno e acompanhamento de desempenho. O repositório é um monorepo com o back-end (`backend/`, Spring Boot 4.1 e Java 21, PostgreSQL via Flyway) e o front-end (`frontend/`, Angular 22). A autenticação usa o Supabase Auth; o back valida o JWT emitido por ele. O desenho completo está em `docs/superpowers/specs/`.
+**App web para um personal trainer acompanhar os treinos e a evolução dos seus alunos.**
 
-## Pré-requisitos
+![Frontend](https://img.shields.io/badge/Frontend-Angular_22-DD0031?logo=angular&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Angular Material](https://img.shields.io/badge/UI-Angular_Material-1F6FEB?logo=materialdesign&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Gr%C3%A1ficos-Chart.js-FF6384?logo=chartdotjs&logoColor=white)
 
-- Java 21 ou superior
-- Node 24 (com npm)
-- Docker (Postgres local via Compose e Testcontainers nos testes)
-- Um projeto Supabase de desenvolvimento
+![Backend](https://img.shields.io/badge/Backend-Spring_Boot_4.1-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-OAuth2_JWT-6DB33F?logo=springsecurity&logoColor=white)
+![Flyway](https://img.shields.io/badge/Migra%C3%A7%C3%B5es-Flyway-CC0200?logo=flyway&logoColor=white)
 
-## Variáveis de ambiente do back-end
+![PostgreSQL](https://img.shields.io/badge/Banco-PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Supabase](https://img.shields.io/badge/Auth-Supabase-3FCF8E?logo=supabase&logoColor=white)
+![JUnit](https://img.shields.io/badge/Testes-JUnit_5-25A162?logo=junit5&logoColor=white)
+![Testcontainers](https://img.shields.io/badge/Testcontainers-Docker-2496ED?logo=docker&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
 
-| Variável | Uso |
-|---|---|
-| `SPRING_PROFILES_ACTIVE` | `dev` ou `prod` |
-| `DB_URL`, `DB_USER`, `DB_PASSWORD` | conexão Postgres (Session Pooler em prod) |
-| `SUPABASE_URL` | base do Auth/JWKS e do Admin API |
-| `SUPABASE_SERVICE_ROLE_KEY` | convites e exclusão de usuários (Admin API); obrigatória, a API não sobe sem ela |
-| `APP_PERSONAL_EMAIL` | bootstrap do personal |
-| `APP_FRONT_URL` | CORS e `redirectTo` dos convites (padrão `http://localhost:4200`) |
+![Deploy front](https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel&logoColor=white)
+![Deploy API](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render&logoColor=black)
 
-Nunca versione segredos (`SUPABASE_SERVICE_ROLE_KEY`, senha do banco). A URL do Supabase e a anon key do front são públicas.
+</div>
 
-Aviso: o SMTP padrão do Supabase só entrega e-mails (convites) para membros do projeto; para convidar alunos reais, configure um SMTP próprio.
+<p align="center">
+  <img src="docs/imagens/login-claro.png" alt="Tela de login no modo claro" width="49%" />
+  <img src="docs/imagens/login-escuro.png" alt="Tela de login no modo escuro" width="49%" />
+</p>
 
-## Configuração do Supabase (desenvolvimento)
+## Sobre
 
-No projeto Supabase de desenvolvimento:
+O Projeto Fit substitui a planilha e o WhatsApp na rotina de um personal trainer. O personal abre o app e, em poucos segundos, vê quem está treinando, quem sumiu e como as cargas estão evoluindo. O aluno registra o treino no celular, durante a sessão, mesmo com a internet da academia oscilando.
 
-- Habilitar as JWT Signing Keys assimétricas.
-- Authentication: deixar "Disable signups" ligado e "Confirm email" ligado.
-- Permitir a redirect URL `http://localhost:4200/definir-senha`.
-- Criar manualmente a conta do personal em Authentication → Users, com o mesmo e-mail de `APP_PERSONAL_EMAIL`.
+A interface é em português, pensada primeiro para o celular, e tem modo claro e escuro.
 
-Os cadastros precisam ficar desabilitados porque o bootstrap do personal confia no e-mail do token: se qualquer pessoa pudesse se cadastrar com esse e-mail, viraria personal.
+## Funcionalidades
 
-Os arquivos `frontend/src/environments/environment*.ts` trazem placeholders (`https://SEU-PROJETO.supabase.co` e `SUA_ANON_KEY`). Substitua pelos valores do projeto Supabase de desenvolvimento antes de tentar o login.
+**Para o personal**
 
-## Rodando localmente
+- Dashboard com todos os alunos: treinos feitos na semana, último treino e alertas de quem sumiu ou está com a ficha vencida.
+- Cadastro de alunos com convite por e-mail; o aluno define a própria senha.
+- Catálogo de exercícios por grupo muscular, com link de vídeo opcional.
+- Fichas de treino com divisões (A, B, C…), séries, repetições, carga e descanso prescritos.
+- Desempenho de cada aluno: aderência semanal à ficha e evolução de carga e volume por exercício.
+- Histórico de treinos de cada aluno, com as séries, cargas e repetições registradas.
 
-Com o back rodando (`docker compose up -d`, depois `cd backend && SPRING_PROFILES_ACTIVE=dev SUPABASE_URL=<url-dev> SUPABASE_SERVICE_ROLE_KEY=<chave> APP_PERSONAL_EMAIL=<email> ./mvnw spring-boot:run`) e o front (`cd frontend && npx ng serve`), acesse `http://localhost:4200`.
+**Para o aluno**
 
-## Testes
+- Treino do dia com a próxima divisão sugerida.
+- Registro de carga e repetições série a série, salvo no aparelho: o treino não se perde se a conexão cair e é enviado quando ela voltar.
+- Histórico dos próprios treinos e gráficos da própria evolução.
 
-```bash
-# back-end (inclui testes com Testcontainers; exige Docker)
-cd backend && ./mvnw -B verify
+## Destaques técnicos
 
-# front-end
-cd frontend && npm ci && npx ng test --watch=false && npx ng build
+- **API em camadas por funcionalidade** (`aluno`, `exercicio`, `ficha`, `sessao`, `desempenho`…): controllers só com DTOs, regras de negócio e verificação de posse nos services.
+- **Autenticação com Supabase Auth** e autorização no Spring: a API é um OAuth2 Resource Server que valida o JWT pela chave pública (JWKS), e o papel do usuário vem do banco, nunca do token.
+- **Dados isolados por usuário:** toda consulta é filtrada pelo usuário autenticado; o banco tem RLS ligado sem políticas, então os dados só são acessíveis pela API.
+- **Registro de treino tolerante a falhas:** fila local no navegador e envio idempotente, para que um treino reenviado nunca seja gravado duas vezes.
+- **Esquema versionado com Flyway** e erros no padrão Problem Details, com mensagens em português.
+- **Testes de integração com Testcontainers** (PostgreSQL real) no back e Vitest no front, rodando no GitHub Actions a cada push.
+- **Tema próprio sobre o Material 3**: paleta azul gerada a partir da cor da marca e modo claro/escuro que segue o sistema ou a escolha do usuário.
+
+## Arquitetura
+
+```
+[Celular / Desktop] ──HTTPS──> Angular (Vercel)
+        │                          │
+        │ login e senha            │ REST + JWT (Bearer)
+        ▼                          ▼
+  Supabase Auth ──JWKS──>  Spring Boot API (Render)
+                                   │
+                                   ▼
+                        PostgreSQL (Supabase)
 ```
 
-O mesmo roda no GitHub Actions (`.github/workflows/ci.yml`) em push e pull request para `main`.
+O Angular usa o Supabase só para autenticação; todos os dados passam pela API, que é a única dona das regras de negócio e a única cliente do banco.
+
+## Estrutura do repositório
+
+```
+backend/    API Spring Boot (Java 21, Maven, Flyway)
+frontend/   App Angular (standalone components, signals, Angular Material)
+docs/       imagens do README
+```
+
+## Status
+
+Em desenvolvimento. As funcionalidades da primeira versão estão prontas; a próxima etapa é o deploy (Vercel, Render e Supabase).

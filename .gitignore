@@ -5,3 +5,6 @@ frontend/.angular/
 .env
 .idea/
 .vscode/
+
+# Planejamento local (specs, planos e pendências das etapas)
+docs/superpowers/
