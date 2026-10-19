@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -34,20 +34,29 @@ const ficha = {
 
 describe('Treino', () => {
   async function montar(
-    ativa: FichaAtiva | null | Error,
-    local: { emAndamento?: unknown; pendentes?: number; comErro?: EnvioComErro[] } = {},
+    ativa: FichaAtiva | null | Error | (FichaAtiva | null)[],
+    local: {
+      emAndamento?: unknown;
+      pendentes?: number | WritableSignal<number>;
+      comErro?: EnvioComErro[];
+      enviarPendentes?: () => Promise<void>;
+    } = {},
     confirma = true,
   ) {
-    const fichaAtiva =
-      ativa instanceof Error ? vi.fn().mockRejectedValue(ativa) : vi.fn().mockResolvedValue(ativa);
+    const fichaAtiva = vi.fn();
+    if (ativa instanceof Error) fichaAtiva.mockRejectedValue(ativa);
+    else if (Array.isArray(ativa)) ativa.forEach((a) => fichaAtiva.mockResolvedValueOnce(a));
+    else fichaAtiva.mockResolvedValue(ativa);
     const sessaoLocal = {
       emAndamento: signal(local.emAndamento ?? null),
-      pendentes: signal(local.pendentes ?? 0),
+      pendentes:
+        typeof local.pendentes === 'function' ? local.pendentes : signal(local.pendentes ?? 0),
       comErro: signal(local.comErro ?? []),
       iniciar: vi.fn(),
       descartar: vi.fn(),
-      enviarPendentes: vi.fn().mockResolvedValue(undefined),
+      enviarPendentes: vi.fn(local.enviarPendentes ?? (() => Promise.resolve())),
       descartarComErro: vi.fn(),
+      tentarDeNovoComErro: vi.fn().mockResolvedValue(undefined),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -142,6 +151,80 @@ describe('Treino', () => {
     expect(el(f).textContent).toContain('Um treino não pôde ser enviado: Divisão inválida.');
     botao(f, 'Descartar')!.click();
     expect(sessaoLocal.descartarComErro).toHaveBeenCalledWith(0);
+  });
+
+  it('treino recusado pode ser enviado de novo', async () => {
+    const { fixture: f, sessaoLocal } = await montar(
+      { ficha, proximaDivisaoId: null },
+      { comErro: [{ sessao: {} as never, mensagem: 'Divisão inválida.' }] },
+    );
+    botao(f, 'Tentar de novo')!.click();
+    expect(sessaoLocal.tentarDeNovoComErro).toHaveBeenCalledWith(0);
+  });
+
+  /** Pendentes que somem quando o envio disparado na abertura termina (`liberar`). */
+  function envioNaAbertura() {
+    const pendentes = signal(1);
+    let liberar!: () => void;
+    const enviarPendentes = () =>
+      new Promise<void>((resolve) => {
+        liberar = () => {
+          pendentes.set(0);
+          resolve();
+        };
+      });
+    return { pendentes, enviarPendentes, liberar: () => liberar() };
+  }
+
+  it('recarrega a sugestão quando os pendentes enviados na abertura terminam', async () => {
+    const envio = envioNaAbertura();
+    const { fixture: f, fichaAtiva } = await montar(
+      [
+        { ficha, proximaDivisaoId: 'd1' },
+        { ficha, proximaDivisaoId: 'd2' },
+      ],
+      envio,
+    );
+    expect(el(f).querySelectorAll<HTMLInputElement>('input[type=radio]')[0].checked).toBe(true);
+
+    envio.liberar();
+    await f.whenStable();
+    f.detectChanges();
+
+    expect(fichaAtiva).toHaveBeenCalledTimes(2);
+    const radios = el(f).querySelectorAll<HTMLInputElement>('input[type=radio]');
+    expect(radios[1].checked).toBe(true);
+    const sugerido = Array.from(el(f).querySelectorAll('label.divisao')).find((l) =>
+      l.textContent?.includes('Sugerido'),
+    );
+    expect(sugerido?.textContent).toContain('Treino B');
+  });
+
+  it('a recarga não troca a divisão escolhida pelo aluno', async () => {
+    const envio = envioNaAbertura();
+    const { fixture: f, sessaoLocal } = await montar(
+      [
+        { ficha, proximaDivisaoId: 'd2' },
+        { ficha, proximaDivisaoId: 'd2' },
+      ],
+      envio,
+    );
+    el(f).querySelectorAll<HTMLInputElement>('input[type=radio]')[0].click();
+    f.detectChanges();
+
+    envio.liberar();
+    await f.whenStable();
+    f.detectChanges();
+
+    expect(el(f).querySelectorAll<HTMLInputElement>('input[type=radio]')[0].checked).toBe(true);
+    botao(f, 'Começar treino')!.click();
+    expect(sessaoLocal.iniciar).toHaveBeenCalledWith(ficha, ficha.divisoes[0]);
+  });
+
+  it('sem pendentes enviados não recarrega a ficha', async () => {
+    const { fixture: f, fichaAtiva } = await montar({ ficha, proximaDivisaoId: 'd1' }, { pendentes: 2 });
+    await f.whenStable();
+    expect(fichaAtiva).toHaveBeenCalledTimes(1);
   });
 
   it('pendentes mostra aviso e Enviar agora', async () => {

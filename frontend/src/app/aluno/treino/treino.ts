@@ -28,22 +28,36 @@ export class Treino implements OnInit {
   protected readonly erro = signal(false);
   private readonly escolhida = signal<string | null>(null);
 
-  protected readonly divisaoEscolhidaId = computed(
-    () =>
-      this.escolhida() ??
-      this.ativa()?.proximaDivisaoId ??
-      this.ativa()?.ficha.divisoes[0]?.id ??
-      null,
-  );
+  /** A escolha manual vale enquanto existir na ficha; senão, a sugerida ou a primeira. */
+  protected readonly divisaoEscolhidaId = computed(() => {
+    const ativa = this.ativa();
+    const escolhida = this.escolhida();
+    if (escolhida && ativa?.ficha.divisoes.some((d) => d.id === escolhida)) return escolhida;
+    return ativa?.proximaDivisaoId ?? ativa?.ficha.divisoes[0]?.id ?? null;
+  });
 
   async ngOnInit(): Promise<void> {
-    void this.local.enviarPendentes();
+    const pendentesAntes = this.local.pendentes();
+    const envio = this.local.enviarPendentes();
     try {
       this.ativa.set(await this.sessaoService.fichaAtiva());
     } catch {
       this.erro.set(true);
     } finally {
       this.carregando.set(false);
+    }
+    await envio;
+    // Treinos enviados agora mudam a próxima divisão sugerida.
+    if (this.local.pendentes() < pendentesAntes) await this.recarregar();
+  }
+
+  /** Recarga silenciosa: em caso de falha, mantém o que já está na tela. */
+  private async recarregar(): Promise<void> {
+    try {
+      this.ativa.set(await this.sessaoService.fichaAtiva());
+      this.erro.set(false);
+    } catch {
+      // mantém a ficha já carregada
     }
   }
 
