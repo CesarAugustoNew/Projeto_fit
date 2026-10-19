@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../auth/auth.service';
 import { UsuarioService } from '../usuario/usuario.service';
 import { erroInterceptor } from './erro.interceptor';
+import { SILENCIOSO } from './silencioso';
 
 describe('erroInterceptor', () => {
   let http: HttpClient;
@@ -80,6 +81,46 @@ describe('erroInterceptor', () => {
     expect(auth.logout).not.toHaveBeenCalled();
     expect(router.navigateByUrl).not.toHaveBeenCalled();
     expect(snack.open).not.toHaveBeenCalled();
+  });
+
+  describe('requisição silenciosa', () => {
+    const silenciosa = () => new HttpContext().set(SILENCIOSO, true);
+
+    function falharSilenciosa(body: object, init: { status: number; statusText: string }) {
+      let erro: unknown;
+      http.post('/s', {}, { context: silenciosa() }).subscribe({ error: (e) => (erro = e) });
+      ctrl.expectOne('/s').flush(body, init);
+      return () => erro;
+    }
+
+    it('status 0 não mostra aviso, mas relança', () => {
+      let erro: unknown;
+      http.post('/s', {}, { context: silenciosa() }).subscribe({ error: (e) => (erro = e) });
+      ctrl.expectOne('/s').error(new ProgressEvent('error'));
+      expect(erro).toBeDefined();
+      expect(snack.open).not.toHaveBeenCalled();
+    });
+
+    it('5xx não mostra aviso, mas relança', () => {
+      const erro = falharSilenciosa({ detail: 'x' }, { status: 503, statusText: 'Unavailable' });
+      expect((erro() as { status: number }).status).toBe(503);
+      expect(snack.open).not.toHaveBeenCalled();
+    });
+
+    it('4xx continua mostrando o detail', () => {
+      falharSilenciosa({ detail: 'Divisão inválida.' }, { status: 400, statusText: 'Bad Request' });
+      expect(snack.open).toHaveBeenCalledWith('Divisão inválida.', 'Fechar', { duration: 5000 });
+    });
+
+    it('401 continua deslogando e 403 continua avisando', () => {
+      falharSilenciosa({}, { status: 401, statusText: 'Unauthorized' });
+      expect(auth.logout).toHaveBeenCalledTimes(1);
+      expect(usuario.limpar).toHaveBeenCalledTimes(1);
+      falharSilenciosa({}, { status: 403, statusText: 'Forbidden' });
+      expect(snack.open).toHaveBeenCalledWith('Sua conta não tem acesso ao app.', 'Fechar', {
+        duration: 5000,
+      });
+    });
   });
 
   it('relança o erro', () => {

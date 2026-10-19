@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { UsuarioService } from '../usuario/usuario.service';
+import { SILENCIOSO } from './silencioso';
 
 export const erroInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -29,6 +30,8 @@ export const erroInterceptor: HttpInterceptorFn = (req, next) => {
             void router.navigateByUrl('/login');
             snackBar.open('Sua conta não tem acesso ao app.', 'Fechar', { duration: 5000 });
           }
+        } else if (req.context.get(SILENCIOSO) && (error.status === 0 || error.status >= 500)) {
+          // envio em segundo plano: quem chamou trata (ex.: mantém o treino na fila)
         } else if (error.status === 0) {
           snackBar.open('Sem conexão com o servidor.', 'Fechar', { duration: 5000 });
         } else {

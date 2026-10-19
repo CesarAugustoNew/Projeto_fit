@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TimeoutError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SILENCIOSO } from '../../core/http/silencioso';
 import { Ficha } from '../../personal/fichas/ficha.model';
 import {
   FichaAtiva,
@@ -110,6 +112,29 @@ describe('SessaoService', () => {
     expect(r.request.body).toEqual(req);
     r.flush(sessao, { status: 201, statusText: 'Created' });
     expect(await promessa).toEqual(sessao);
+  });
+
+  it('registrar é silencioso (envio em segundo plano)', async () => {
+    const promessa = service.registrar(req);
+    const r = http.expectOne(`${api}/api/sessoes`);
+    expect(r.request.context.get(SILENCIOSO)).toBe(true);
+    r.flush(sessao);
+    await promessa;
+  });
+
+  it('registrar desiste com TimeoutError depois de 15 s sem resposta', async () => {
+    vi.useFakeTimers();
+    try {
+      const erro = service.registrar(req).catch((e: unknown) => e);
+      const r = http.expectOne(`${api}/api/sessoes`);
+      await vi.advanceTimersByTimeAsync(14_999);
+      expect(r.cancelled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await erro).toBeInstanceOf(TimeoutError);
+      expect(r.cancelled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('minhas envia page e size=20', async () => {

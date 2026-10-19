@@ -1,10 +1,13 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SILENCIOSO } from '../../core/http/silencioso';
 import { FichaAtiva, Pagina, Sessao, SessaoRequest, SessaoResumo } from './sessao.model';
 
 const TAMANHO_PAGINA = 20;
+/** Sem resposta neste prazo, o envio desiste (`TimeoutError`) e o treino fica na fila. */
+const PRAZO_ENVIO_MS = 15_000;
 
 @Injectable({ providedIn: 'root' })
 export class SessaoService {
@@ -18,8 +21,15 @@ export class SessaoService {
     return res.status === 204 || res.body == null ? null : res.body;
   }
 
+  /** Envio em segundo plano da fila: silencioso (sem aviso de rede/5xx) e com prazo. */
   registrar(req: SessaoRequest): Promise<Sessao> {
-    return firstValueFrom(this.http.post<Sessao>(`${this.api}/api/sessoes`, req));
+    return firstValueFrom(
+      this.http
+        .post<Sessao>(`${this.api}/api/sessoes`, req, {
+          context: new HttpContext().set(SILENCIOSO, true),
+        })
+        .pipe(timeout(PRAZO_ENVIO_MS)),
+    );
   }
 
   minhas(pagina: number): Promise<Pagina<SessaoResumo>> {
