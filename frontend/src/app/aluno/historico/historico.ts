@@ -1,7 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
-import { SessaoResumo, duracaoMinutos, formatarDataHora } from '../../shared/sessao/sessao.model';
+import {
+  SessaoResumo,
+  acrescentarPagina,
+  duracaoMinutos,
+  formatarDataHora,
+} from '../../shared/sessao/sessao.model';
 import { SessaoService } from '../../shared/sessao/sessao.service';
 
 @Component({
@@ -37,7 +42,7 @@ export class Historico {
     this.erro.set(false);
     try {
       const pagina = await this.servico.minhas(this.proximaPagina);
-      this.sessoes.update((atuais) => [...atuais, ...pagina.content]);
+      this.sessoes.update((atuais) => acrescentarPagina(atuais, pagina.content));
       this.proximaPagina = pagina.page.number + 1;
       this.temMais.set(this.proximaPagina < pagina.page.totalPages);
     } catch {

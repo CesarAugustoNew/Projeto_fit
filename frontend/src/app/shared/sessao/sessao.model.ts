@@ -75,3 +75,9 @@ export function duracaoMinutos(inicio: string, fim: string): number {
   const minutos = (new Date(fim).getTime() - new Date(inicio).getTime()) / 60000;
   return Math.max(1, Math.round(minutos));
 }
+
+/** Acrescenta uma página ignorando sessões já listadas (uma sessão nova desloca as páginas). */
+export function acrescentarPagina(atuais: SessaoResumo[], novas: SessaoResumo[]): SessaoResumo[] {
+  const ids = new Set(atuais.map((s) => s.id));
+  return [...atuais, ...novas.filter((s) => !ids.has(s.id))];
+}

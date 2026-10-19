@@ -48,6 +48,20 @@ describe('Historico', () => {
     expect(botao(f, 'Carregar mais')).toBeUndefined();
   });
 
+  it('Carregar mais ignora sessões já listadas', async () => {
+    const minhas = vi
+      .fn()
+      .mockResolvedValueOnce(pagina([resumo('s1', 'Treino A'), resumo('s2', 'Treino B')], 0, 2))
+      .mockResolvedValueOnce(pagina([resumo('s2', 'Treino B'), resumo('s3', 'Treino C')], 1, 2));
+    const f = await montar(minhas);
+    botao(f, 'Carregar mais')!.click();
+    await f.whenStable();
+    f.detectChanges();
+    const itens = Array.from(el(f).querySelectorAll('a.item'));
+    expect(itens.length).toBe(3);
+    expect(itens.map((a) => a.getAttribute('href')!.split('/').at(-1))).toEqual(['s1', 's2', 's3']);
+  });
+
   it('Carregar mais busca a próxima página', async () => {
     const minhas = vi
       .fn()
