@@ -1,0 +1,38 @@
+<section class="painel-desempenho">
+  <h2>Desempenho</h2>
+
+  @if (carregando()) {
+    <p class="mensagem">Carregando…</p>
+  } @else if (erro()) {
+    <p class="mensagem" role="alert">Não foi possível carregar o desempenho.</p>
+  } @else {
+    <section class="bloco">
+      <h3>Aderência semanal</h3>
+      <app-grafico-aderencia [semanas]="semanas()" />
+    </section>
+
+    <section class="bloco">
+      <h3>Evolução por exercício</h3>
+      @if (exercicios().length === 0) {
+        <p class="mensagem">Nenhum treino registrado ainda.</p>
+      } @else {
+        <mat-form-field appearance="outline" class="campo">
+          <mat-label>Exercício</mat-label>
+          <mat-select [value]="exercicioId()" (selectionChange)="trocarExercicio($event.value)">
+            @for (e of exercicios(); track e.id) {
+              <mat-option [value]="e.id">{{ e.nome }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (carregandoEvolucao()) {
+          <p class="mensagem">Carregando…</p>
+        } @else if (erroEvolucao()) {
+          <p class="mensagem" role="alert">Não foi possível carregar o desempenho.</p>
+        } @else {
+          <app-grafico-evolucao [pontos]="pontos()" />
+        }
+      }
+    </section>
+  }
+</section>

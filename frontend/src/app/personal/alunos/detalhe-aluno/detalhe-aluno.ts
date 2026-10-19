@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
+import { AlvoDesempenho } from '../../../shared/desempenho/desempenho.model';
+import { PainelDesempenho } from '../../../shared/desempenho/painel-desempenho/painel-desempenho';
 import { confirmar } from '../../../shared/confirmacao/confirmacao-dialog';
 import { FichasDoAluno } from '../../fichas/fichas-do-aluno/fichas-do-aluno';
 import { SessoesDoAluno } from '../../sessoes/sessoes-do-aluno/sessoes-do-aluno';
@@ -11,7 +13,7 @@ import { AlunoService } from '../aluno.service';
 
 @Component({
   selector: 'app-detalhe-aluno',
-  imports: [RouterLink, MatButtonModule, FichasDoAluno, SessoesDoAluno],
+  imports: [RouterLink, MatButtonModule, FichasDoAluno, SessoesDoAluno, PainelDesempenho],
   templateUrl: './detalhe-aluno.html',
   styleUrl: './detalhe-aluno.scss',
 })
@@ -24,6 +26,10 @@ export class DetalheAluno implements OnInit {
 
   protected readonly rotulos = ROTULO_STATUS;
   protected readonly aluno = signal<Aluno | null>(null);
+  protected readonly alvoDesempenho = computed<AlvoDesempenho | null>(() => {
+    const a = this.aluno();
+    return a ? { tipo: 'aluno', alunoId: a.id } : null;
+  });
   protected readonly carregando = signal(true);
   protected readonly erro = signal(false);
   protected readonly enviando = signal(false);

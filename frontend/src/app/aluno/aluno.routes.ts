@@ -7,6 +7,7 @@ import { Treino } from './treino/treino';
 const itens: ItemNav[] = [
   { rota: '/aluno/treino', rotulo: 'Treino', icone: 'fitness_center' },
   { rota: '/aluno/historico', rotulo: 'Histórico', icone: 'history' },
+  { rota: '/aluno/evolucao', rotulo: 'Evolução', icone: 'trending_up' },
 ];
 
 export const alunoRoutes: Routes = [
@@ -22,6 +23,10 @@ export const alunoRoutes: Routes = [
       {
         path: 'historico',
         loadComponent: () => import('./historico/historico').then((m) => m.Historico),
+      },
+      {
+        path: 'evolucao',
+        loadComponent: () => import('./evolucao/evolucao').then((m) => m.Evolucao),
       },
       {
         path: 'historico/:id',

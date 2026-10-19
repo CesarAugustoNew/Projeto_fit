@@ -1,0 +1,36 @@
+.painel-desempenho {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+
+  h2,
+  h3 {
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo {
+  width: 100%;
+  max-width: 360px;
+}
+
+.mensagem {
+  text-align: center;
+  opacity: 0.7;
+  margin: 16px 0;
+}

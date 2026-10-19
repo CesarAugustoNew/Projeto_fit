@@ -53,6 +53,9 @@
 
     <app-fichas-do-aluno [alunoId]="a.id" [alunoAtivo]="a.status !== 'INATIVO'" />
     <app-sessoes-do-aluno [alunoId]="a.id" />
+    @if (alvoDesempenho(); as alvo) {
+      <app-painel-desempenho [alvo]="alvo" />
+    }
   } @else if (erro()) {
     <p class="mensagem" role="alert">Não foi possível carregar o aluno.</p>
   }

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Aluno } from '../aluno.model';
 import { AlunoService } from '../aluno.service';
+import { DesempenhoService } from '../../../shared/desempenho/desempenho.service';
 import { SessaoService } from '../../../shared/sessao/sessao.service';
 import { FichaService } from '../../fichas/ficha.service';
 import { DetalheAluno } from './detalhe-aluno';
@@ -44,6 +45,14 @@ describe('DetalheAluno', () => {
           provide: SessaoService,
           useValue: {
             doAluno: vi.fn().mockResolvedValue({ content: [], page: { size: 20, number: 0, totalElements: 0, totalPages: 0 } }),
+          },
+        },
+        {
+          provide: DesempenhoService,
+          useValue: {
+            exercicios: vi.fn().mockResolvedValue([]),
+            aderencia: vi.fn().mockResolvedValue([]),
+            evolucao: vi.fn().mockResolvedValue([]),
           },
         },
         { provide: MatSnackBar, useValue: { open } },
