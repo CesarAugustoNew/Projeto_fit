@@ -1,5 +1,6 @@
 package com.projetofit.desempenho;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,9 +19,11 @@ import com.projetofit.usuario.Usuario;
 import com.projetofit.usuario.UsuarioRepository;
 import java.sql.Timestamp;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +76,7 @@ class AderenciaIT extends TesteIntegracao {
                         .header("Authorization", bearerPersonal()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(8))
-                .andExpect(jsonPath("$[7].percentual").doesNotExist());
+                .andExpect(jsonPath("$[7].percentual").value(nullValue()));
     }
 
     @Test
@@ -90,7 +93,11 @@ class AderenciaIT extends TesteIntegracao {
         Ficha ficha = fichaRepository.save(new Ficha(ana, "Ficha", null, 2, LocalDate.of(2026, 1, 1), null));
         Instant ha30Dias = Instant.now(clock).minus(30, ChronoUnit.DAYS);
         jdbc.update("update ficha set criado_em = ? where id = ?", Timestamp.from(ha30Dias), ficha.getId());
-        Instant fim = Instant.now(clock).minusSeconds(60);
+        Instant agora = Instant.now(clock);
+        Instant inicioDaSemana = LocalDate.now(clock).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay(clock.getZone()).toInstant();
+        Instant segundaAoMeioDia = inicioDaSemana.plus(12, ChronoUnit.HOURS);
+        Instant fim = segundaAoMeioDia.isBefore(agora) ? segundaAoMeioDia : agora;
         sessaoRepository.saveAndFlush(
                 new Sessao(UUID.randomUUID(), ana, null, "Treino", fim.minusSeconds(3600), fim, null));
 
@@ -100,7 +107,9 @@ class AderenciaIT extends TesteIntegracao {
                 .andExpect(jsonPath("$[0].planejado").value(2))
                 .andExpect(jsonPath("$[0].realizados").value(0))
                 .andExpect(jsonPath("$[0].percentual").value(0))
-                .andExpect(jsonPath("$[1].planejado").value(2));
+                .andExpect(jsonPath("$[1].planejado").value(2))
+                .andExpect(jsonPath("$[1].realizados").value(1))
+                .andExpect(jsonPath("$[1].percentual").value(50));
     }
 
     @Test
