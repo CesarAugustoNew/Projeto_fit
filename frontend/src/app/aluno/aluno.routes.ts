@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { ItemNav } from '../layout/item-nav';
 import { Shell } from '../layout/shell';
+import { Execucao } from './execucao/execucao';
 import { Treino } from './treino/treino';
 
 const itens: ItemNav[] = [
@@ -16,10 +17,8 @@ export const alunoRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'treino' },
       { path: 'treino', component: Treino },
-      {
-        path: 'treino/execucao',
-        loadComponent: () => import('./execucao/execucao').then((m) => m.Execucao),
-      },
+      // Eager: o aluno pode tocar "Começar treino" já sem sinal, quando um chunk lazy não baixaria.
+      { path: 'treino/execucao', component: Execucao },
       {
         path: 'historico',
         loadComponent: () => import('./historico/historico').then((m) => m.Historico),
