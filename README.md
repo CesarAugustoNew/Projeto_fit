@@ -35,7 +35,7 @@
 
 ## Sobre
 
-O Projeto Fit dá ao personal trainer mais controle sobre seus alunos. Em um só lugar, ele monta as fichas de treino, acompanha quem está treinando e quem sumiu, e vê como as cargas e a frequência de cada aluno estão evoluindo. Do outro lado, o aluno segue a ficha e registra o treino no celular durante a sessão, mesmo com a internet da academia oscilando, e tudo chega ao personal.
+O Projeto Fit dá ao personal trainer mais controle sobre seus alunos. Em um só lugar, ele monta as fichas de treino, acompanha quem está treinando e quem faltou, e vê como as cargas e a frequência de cada aluno estão evoluindo. Do outro lado, o aluno segue a ficha e registra o treino no celular durante a sessão, mesmo com a internet da academia oscilando, e tudo chega ao personal.
 
 A interface é em português, pensada primeiro para o celular, e tem modo claro e escuro.
 
